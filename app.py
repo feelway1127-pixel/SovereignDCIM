@@ -1,10 +1,11 @@
 ﻿from flask import Flask, jsonify, render_template_string
-import random
+import os
 
 app = Flask(__name__)
 
-# 🖥️ Jinja2 파싱 충돌(404 원인)을 우회하도록 격리한 마스터 템플릿
+# 🖥️ {% raw %} 태그를 사용하여 내부 JavaScript 중괄호와의 Jinja2 파싱 충돌을 원천 차단
 MAIN_HTML = """
+{% raw %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -166,4 +167,11 @@ MAIN_HTML = """
             
             let hovered = false;
             racks.forEach(rack => {
-                if (mouseX
+                if (mouseX >= rack.x && mouseX <= rack.x + rack.w &&
+                    mouseY >= rack.y && mouseY <= rack.y + rack.h) {
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                    tooltip.innerHTML = `
+                        <strong style="color:#00ff41">${rack.id}</strong><br>
+                        인프라 유형: ${rack.isAI ? '고밀도 AI 연산 노드' : '네트워크/스토리지
