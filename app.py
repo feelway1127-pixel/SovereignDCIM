@@ -3,7 +3,7 @@ import random
 
 app = Flask(__name__)
 
-# 🖥️ 상면도(Floor Plan) 관제 및 암호화 파괴 프로토콜이 내장된 마스터 통합 템플릿
+# 🖥️ Jinja2 파싱 충돌(404 원인)을 우회하도록 격리한 마스터 템플릿
 MAIN_HTML = """
 <!DOCTYPE html>
 <html lang="ko">
@@ -17,13 +17,14 @@ MAIN_HTML = """
             --neon-red: #ef4444; 
             --neon-blue: #38bdf8; 
             --panel: #0a0a0c; 
-            --grid: rgba(255,255,255,0.03); 
         }
         body { 
-            background-color: var(--bg); color: #cbd5e1; 
-            font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; overflow-x: hidden; 
-            background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); 
-            background-size: 40px 40px; 
+            background-color: var(--bg); 
+            color: #cbd5e1; 
+            font-family: 'Malgun Gothic', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            overflow-x: hidden; 
         }
         .container { max-width: 1600px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
         
@@ -52,14 +53,14 @@ MAIN_HTML = """
         <div class="header">
             <h1 class="brand">dcim<span>.kr</span></h1>
             <div style="color: #00ff41; border: 1px solid #00ff41; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: bold;">
-                AIR-GAPPED OOB NETWORK SECURE (자립형 자산 관제)
+                AIR-GAPPED OOB NETWORK SECURE (소버린 자립 관제 가동 중)
             </div>
             <span style="color: #64748b; font-size: 14px;">[MASTER_SESSION]</span>
         </div>
 
         <div class="main-grid">
             <div class="panel">
-                <h2><span>🔥 2D Data Center Floor Plan (소버린 실시간 히트맵)</span> <span id="cooling-status" style="color:var(--neon-blue); display:none;">CRAC PRE-COOLING ACTIVE</span></h2>
+                <h2><span>🔥 2D Data Center Floor Plan (실시간 히트맵)</span> <span id="cooling-status" style="color:var(--neon-blue); display:none;">CRAC PRE-COOLING ACTIVE</span></h2>
                 <div class="floor-plan-container">
                     <canvas id="floorCanvas"></canvas>
                     <div id="tooltip"></div>
@@ -91,9 +92,6 @@ MAIN_HTML = """
     </div>
 
     <script>
-        // ------------------------------------------------------------
-        // 1. 2D Floor Plan 자립형 그래픽스 엔진 (Canvas)
-        // ------------------------------------------------------------
         const canvas = document.getElementById('floorCanvas');
         const ctx = canvas.getContext('2d');
         const tooltip = document.getElementById('tooltip');
@@ -168,119 +166,4 @@ MAIN_HTML = """
             
             let hovered = false;
             racks.forEach(rack => {
-                if (mouseX >= rack.x && mouseX <= rack.x + rack.w &&
-                    mouseY >= rack.y && mouseY <= rack.y + rack.h) {
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (e.clientX + 15) + 'px';
-                    tooltip.style.top = (e.clientY + 15) + 'px';
-                    tooltip.innerHTML = `
-                        <strong style="color:#00ff41">${rack.id}</strong><br>
-                        인프라 유형: ${rack.isAI ? '고밀도 AI 연산 노드' : '네트워크/스토리지 자산'}<br>
-                        실측 온도: <span style="color:${getColorForTemp(rack.temp)}">${rack.temp.toFixed(1)} °C</span><br>
-                        실측 전력: ${(rack.temp * 0.4).toFixed(1)} kW
-                    `;
-                    hovered = true;
-                }
-            });
-            if (!hovered) tooltip.style.display = 'none';
-        });
-
-        canvas.addEventListener('mouseleave', () => tooltip.style.display = 'none');
-
-        // ------------------------------------------------------------
-        // 2. 외부 종속성 0% 순수 자바스크립트 전력 시계열 렌더러
-        // ------------------------------------------------------------
-        const lineCanvas = document.getElementById('pureLineCanvas');
-        const lineCtx = lineCanvas.getContext('2d');
-        let powerHistory = Array(30).fill(120);
-
-        function resizeLineCanvas() {
-            lineCanvas.width = lineCanvas.parentElement.clientWidth;
-            lineCanvas.height = lineCanvas.parentElement.clientHeight;
-        }
-        window.addEventListener('resize', resizeLineCanvas);
-        resizeLineCanvas();
-
-        function drawPureLineChart() {
-            lineCtx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
-            
-            // 모니터링 그리드 백그라운드 스케일링
-            lineCtx.strokeStyle = '#141419'; lineCtx.lineWidth = 1;
-            for(let i=0; i<lineCanvas.width; i+=30) { lineCtx.beginPath(); lineCtx.moveTo(i, 0); lineCtx.lineTo(i, lineCanvas.height); lineCtx.stroke(); }
-            for(let j=0; j<lineCanvas.height; j+=30) { lineCtx.beginPath(); lineCtx.moveTo(0, j); lineCtx.lineTo(lineCanvas.width, j); lineCtx.stroke(); }
-
-            if(powerHistory.length < 2) return;
-            
-            // 꺾은선 렌더링 파이프라인
-            lineCtx.strokeStyle = '#00ff41'; lineCtx.lineWidth = 2;
-            lineCtx.beginPath();
-            const step = lineCanvas.width / (powerHistory.length - 1);
-            
-            for(let i=0; i<powerHistory.length; i++) {
-                const x = i * step;
-                // 정격 한계점 (최대 250kW 스케일 변환 연산)
-                const y = lineCanvas.height - (powerHistory[i] / 250 * lineCanvas.height);
-                if(i === 0) lineCtx.moveTo(x, y); else lineCtx.lineTo(x, y);
-            }
-            lineCtx.stroke();
-        }
-
-        // ------------------------------------------------------------
-        // 3. 통합 주기적 데이터 갱신 루프
-        // ------------------------------------------------------------
-        async function updateDashboard() {
-            try {
-                const t = Date.now() / 1000;
-                const aiLoad = (Math.sin(t / 4) + 1) / 2; 
-                
-                let totalPower = 0;
-                racks.forEach(rack => {
-                    if(rack.isAI) {
-                        rack.temp = 25 + (aiLoad * 50) + (Math.random() * 2);
-                    } else {
-                        rack.temp = 22 + (Math.random() * 4);
-                    }
-                    totalPower += rack.temp * 0.4;
-                });
-
-                if (aiLoad > 0.8) {
-                    document.getElementById('cooling-status').style.display = 'inline';
-                } else {
-                    document.getElementById('cooling-status').style.display = 'none';
-                }
-
-                drawFloorPlan();
-                
-                powerHistory.push(totalPower);
-                if(powerHistory.length > 30) powerHistory.shift();
-                drawPureLineChart();
-
-            } catch (e) { console.error(e); }
-        }
-
-        setInterval(updateDashboard, 1000);
-        
-        // 초기화 가동 팩트
-        setTimeout(() => {
-            resizeCanvas();
-            resizeLineCanvas();
-            drawFloorPlan();
-            drawPureLineChart();
-        }, 100);
-    </script>
-</body>
-</html>
-"""
-
-@app.route('/')
-def index():
-    return render_template_string(MAIN_HTML)
-
-# 🚀 인프라 자산 상태 추적용 경량 API 엔드포인트 개방 스펙
-@app.route('/api/v1/metrics')
-def get_live_metrics():
-    return jsonify({"status": "healthy", "integrity": "secure"})
-
-if __name__ == '__main__':
-    # 로컬 디버그 및 릴리즈 인터페이스 가동
-    app.run(host='0.0.0.0', port=5000, debug=True)
+                if (mouseX
