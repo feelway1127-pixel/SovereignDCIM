@@ -1,24 +1,17 @@
-from flask import Flask, jsonify, render_template_string, request
+﻿from flask import Flask, jsonify, render_template_string
 from core_engine import SovereignCore
 
 app = Flask(__name__)
 core = SovereignCore()
 
-# 가상의 인프라 원시 데이터 스트림 (실제로는 센서나 SNMP에서 긁어오는 값)
+# 가상의 인프라 원시 데이터 스트림
 mock_raw_stream = {
     "SAMSUNG_PDU_01": 2200,
     "VERTIV_UPS_02": 1,
     "CUSTOM_SENSOR_99": 26.5
 }
 
-# 🔐 보안용 기만 데이터 (샌드박스 매트릭스)
-honeypot_fake_stream = {
-    "SAMSUNG_PDU_01": {"value": 9999.9, "unit": "kW", "description": "⚠️ 기만용 더미 노드 A"},
-    "VERTIV_UPS_02": {"value": 0, "unit": "CRITICAL", "description": "⚠️ 기만용 더미 노드 B"},
-    "CUSTOM_SENSOR_99": {"value": -99.9, "unit": "°C", "description": "⚠️ 기만용 더미 노드 C"}
-}
-
-# 메인 화면 UI (사이버펑크 스타일 대시보드 + 안티 디버깅 스크립트 내장)
+# 메인 화면 UI (실시간 데이터 카드 + 하단 타임머신 실시간 로그 테이블 추가)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ko">
@@ -27,55 +20,87 @@ HTML_TEMPLATE = """
     <title>Sovereign DCIM - Core Console</title>
     <style>
         body { background-color: #0d0e15; color: #00ff66; font-family: 'Courier New', monospace; padding: 30px; }
-        .container { max-width: 800px; margin: 0 auto; border: 1px solid #00ff66; padding: 20px; box-shadow: 0 0 15px #00ff66; }
+        .container { max-width: 900px; margin: 0 auto; border: 1px solid #00ff66; padding: 20px; box-shadow: 0 0 15px #00ff66; }
         h1 { text-align: center; color: #ff0055; text-shadow: 0 0 8px #ff0055; }
-        .metric-card { background: #161925; border-left: 5px solid #00ff66; margin: 15px 0; padding: 15px; }
+        .grid { display: flex; gap: 15px; justify-content: space-between; }
+        .metric-card { background: #161925; border-left: 5px solid #00ff66; padding: 15px; flex: 1; }
         .value { font-size: 24px; color: #ffffff; font-weight: bold; }
+        .history-section { margin-top: 30px; border-top: 1px dashed #00ff66; padding-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+        th { background-color: #161925; color: #ff0055; }
+        tr:nth-child(even) { background-color: #11131c; }
     </style>
     <script>
-        // 🛡️ 핵심 기만 무기: 개발자 도구(F12) 탐지 및 콘솔 무력화
-        setInterval(function() {
-            // 무한 루프 디버거를 걸어 정상적인 검사 차단
-            debugger; 
-        }, 100);
-
-        // 콘솔 창을 강제로 계속 초기화하여 패킷 스니핑 방해
+        setInterval(function() { debugger; }, 500); // 안티 디버깅
         console.log = function() { console.clear(); };
     </script>
 </head>
 <body>
     <div class="container">
         <h1>SOVEREIGN DCIM CORE</h1>
-        <hr style="border-color: #00ff66;">
-        <p style="text-align: center;">[ SYSTEM STATUS: SECURE / NOISE LEVEL: MINIMAL ]</p>
+        <p style="text-align: center;">[ SYSTEM STATUS: SECURE / TIMEMACHINE ENGINE: ACTIVE ]</p>
         
-        <div id="metrics-display">
+        <div class="grid" id="metrics-display">
             </div>
+
+        <div class="history-section">
+            <h2>⏳ INFRASTRUCTURE TIMEMACHINE LOGS (최신 10개 적재 데이터)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>TIMESTAMP</th>
+                        <th>HARDWARE ID</th>
+                        <th>VALUE</th>
+                        <th>UNIT</th>
+                    </tr>
+                </thead>
+                <tbody id="history-display">
+                    </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // 데이터 실시간 로드 함수
-        async function fetchMetrics() {
+        async function updateDashboard() {
             try {
-                const response = await fetch('/api/v1/metrics');
-                const data = await response.json();
-                let html = '';
-                for (const [key, info] of Object.entries(data)) {
-                    html += `
+                // 1. 실시간 데이터 가져오기
+                const resMetrics = await fetch('/api/v1/metrics');
+                const dataMetrics = await resMetrics.json();
+                let metricsHtml = '';
+                for (const [key, info] of Object.entries(dataMetrics)) {
+                    metricsHtml += `
                         <div class="metric-card">
-                            <h3>${info.description} (${key})</h3>
+                            <small style="color: #ff0055;">${key}</small>
+                            <h3>${info.description}</h3>
                             <div class="value">${info.value} ${info.unit}</div>
-                            <small style="color: #888;">PORT: ${info.port}</small>
                         </div>
                     `;
                 }
-                document.getElementById('metrics-display').innerHTML = html;
+                document.getElementById('metrics-display').innerHTML = metricsHtml;
+
+                // 2. 타임머신 로그 데이터 가져오기
+                const resHistory = await fetch('/api/v1/history');
+                const dataHistory = await resHistory.json();
+                let historyHtml = '';
+                dataHistory.forEach(row => {
+                    historyHtml += `
+                        <tr>
+                            <td>${row.timestamp}</td>
+                            <td style="color: #00ffbb;">${row.hardware_id}</td>
+                            <td>${row.value}</td>
+                            <td style="color: #888;">${row.unit}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('history-display').innerHTML = historyHtml;
+
             } catch (e) {
-                console.error("Data Stream Interrupted");
+                // 실시간 스트림 단절 제어
             }
         }
-        setInterval(fetchMetrics, 2000); // 2초마다 꼼꼼하게 갱신
-        fetchMetrics();
+        setInterval(updateDashboard, 2000); // 2초 주기 동기화
+        updateDashboard();
     </script>
 </body>
 </html>
@@ -87,17 +112,15 @@ def index():
 
 @app.route('/api/v1/metrics')
 def get_metrics():
-    # 비인가자 또는 특정 자동화 스캔 봇(User-Agent 검증 등) 판단 로직 적용 가능
-    # 여기서는 데모를 위해 정상 데이터를 파싱해서 보내주되, 
-    # 해커가 직접 API 주소만 무단으로 긁어가려고 할 때 조건부 기만 데이터를 보낼 수 있는 구조를 만듦
-    is_suspicious = False # 탐지 로직 발동 조건 (추후 확장)
-    
-    if is_suspicious:
-        return jsonify(honeypot_fake_stream)
-    
-    # 정상 흐름일 때 코어 엔진 작동
-    processed_data = core.parse_metrics(mock_raw_stream)
+    # 원시 데이터를 파싱함과 동시에 데이터베이스에 자동 기록
+    processed_data = core.parse_and_log_metrics(mock_raw_stream)
     return jsonify(processed_data)
+
+@app.route('/api/v1/history')
+def get_history():
+    # 데이터베이스에서 최근 10개의 타임머신 데이터를 추출하여 리턴
+    logs = core.get_historical_logs(limit=10)
+    return jsonify(logs)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=True)
