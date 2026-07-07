@@ -1,0 +1,22 @@
+{
+  "HARDWARE_REGISTRY": {
+    "SAMSUNG_PDU_01": {
+      "port": 502,
+      "scale_factor": 0.1,
+      "unit": "kW",
+      "description": "메인 A동 전력 분배 장치"
+    },
+    "VERTIV_UPS_02": {
+      "port": 161,
+      "scale_factor": 1.0,
+      "unit": "Status",
+      "description": "B동 비상 무정전 전원 공급 장치"
+    },
+    "CUSTOM_SENSOR_99": {
+      "port": 8080,
+      "scale_factor": 1.0,
+      "unit": "°C",
+      "description": "랙 내부 정밀 온도 센서"
+    }
+  }
+}
