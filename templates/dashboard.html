@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>dcim.kr - Ultimate Sovereign DCIM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="sim-banner">
+        ⚠️ SIMULATION MODE — 아래 텔레메트리(온도/전력)는 시연용 수학 모델입니다. 실제 센서 데이터가 아닙니다.
+    </div>
+
+    <div class="modal-overlay" id="zero-modal">
+        <div class="modal">
+            <h2 class="modal-title">Hardware Zeroization Sequence (Simulated)</h2>
+            <p class="modal-desc">OOB Network executing NIST SP 800-88 purge sequence to bare-metal hardware. All cryptographic keys will be physically destroyed.</p>
+
+            <form id="reauth-form" class="reauth-form">
+                <label for="reauth-password">재인증: 현재 계정 비밀번호를 입력하세요</label>
+                <input type="password" id="reauth-password" required>
+                <div class="reauth-actions">
+                    <button type="submit" class="btn btn-danger">실행 (Execute)</button>
+                    <button type="button" class="btn" onclick="closeModal()">취소</button>
+                </div>
+                <div id="reauth-error" class="login-error" style="display:none;"></div>
+            </form>
+
+            <div class="term-log" id="wipe-logs"></div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="logo">dcim<span>.kr</span></div>
+        <div class="user-badge">{{ display_name }} <span class="role-tag">{{ role }}</span></div>
+
+        <div class="menu-group">Dashboard</div>
+        <div class="nav-item active" onclick="switchTab('floorplan', '2D/3D 현황관리 (AI 열화상)', this)">2D/3D 현황관리</div>
+        <div class="nav-item" onclick="switchTab('elevation', '랙/실장도 관리 (U-Level)', this)">랙/실장도 관리</div>
+        <div class="nav-item" onclick="switchTab('topology', '네트워크/포트 연결도', this)">네트워크(포트) 관리</div>
+
+        <div class="menu-group">Assets & Maintenance</div>
+        <div class="nav-item">IT자산 관리 (Inventory)</div>
+        <div class="nav-item">장비 반출입 관리</div>
+        <div class="nav-item">S/W 라이선스 관리</div>
+
+        {% if role == 'admin' %}
+        <div class="menu-group">Security</div>
+        <div class="nav-item" onclick="switchTab('audit', '감사 로그 (Audit Trail)', this)">감사 로그</div>
+        <div class="nav-item critical" onclick="openModal()">
+            <span style="font-size:14px;">🔒</span>
+            <span>Sovereign Protocol (Admin Only)</span>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}" class="nav-item logout-link">로그아웃</a>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-title" id="topbar-title">2D/3D 현황관리 (AI 열화상)</div>
+            <div class="oob-badge">OOB NETWORK SECURE</div>
+        </div>
+
+        <div id="view-floorplan" class="view-section active">
+            <div class="panel">
+                <div class="panel-title">
+                    <span>AI Predictive Thermal Map</span>
+                    <div class="btn-group">
+                        <button class="btn" id="btn-3d" onclick="toggle3D()">Toggle 3D View</button>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-bottom: 15px;">
+                    <button class="btn active" onclick="setWorkload(0.1, this)">IDLE (일반 운영)</button>
+                    <button class="btn" onclick="setWorkload(0.9, this)">LLM TRAINING (초고밀도 학습)</button>
+                </div>
+
+                <div class="canvas-container" id="canvas-wrapper">
+                    <canvas id="floorCanvas"></canvas>
+                    <div id="tooltip"></div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-title">Power Trend (IT vs Cooling)</div>
+                    <div style="height: 180px;"><canvas id="trendChart"></canvas></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title">Facility Core Metrics</div>
+                    <div class="metric-list">
+                        <div class="metric-row">
+                            <span>Total IT Power</span>
+                            <strong id="val-power" class="mono">0.0 kW</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>Real-time PUE</span>
+                            <strong id="val-pue" class="mono accent-blue">1.00</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>AI Pre-Cooling Status</span>
+                            <strong id="val-cool">AUTO: 22°C</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <span>🧠 AI Engine — 예측 / 이상탐지</span>
+                    <span class="ai-note">선형회귀 기반 30초 예측 · Z-score 이상탐지</span>
+                </div>
+                <div class="ai-grid">
+                    <div class="ai-card">
+                        <span class="ai-label">IT Power 추세</span>
+                        <strong id="ai-trend" class="mono">-</strong>
+                    </div>
+                    <div class="ai-card">
+                        <span class="ai-label">IT Power 30초 예측</span>
+                        <strong id="ai-forecast" class="mono">-</strong>
+                    </div>
+                    <div class="ai-card">
+                        <span class="ai-label">이상탐지 (Z-score)</span>
+                        <strong id="ai-anomaly" class="mono">-</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-elevation" class="view-section">
+            <div class="panel">
+                <div class="panel-title">U-Level Rack Elevation (열화상 융합 실장도)</div>
+                <p class="panel-desc">각 U(유닛)별 장착 상태와 실시간 AI 부하/발열 상태를 연동하여 보여줍니다.</p>
+
+                <div class="rack-container" id="rack-container"></div>
+
+                <div class="legend-row">
+                    <span class="legend-item"><span class="swatch swatch-blue"></span> Compute Node</span>
+                    <span class="legend-item"><span class="swatch swatch-green"></span> Network Switch</span>
+                    <span class="legend-item"><span class="swatch swatch-orange"></span> Storage Array</span>
+                    <span class="legend-item"><span class="swatch swatch-red"></span> Thermal Warning</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-topology" class="view-section">
+            <div class="panel">
+                <div class="panel-title">Dynamic Network Topology (트래픽/발열 연동 포트 맵)</div>
+                <p class="panel-desc">AI 학습 시 스위치 간 발생하는 병목과 포트 발열을 실시간 토폴로지로 시각화합니다.</p>
+
+                <div class="topo-container">
+                    <svg class="topo-svg" id="topo-svg"></svg>
+                    <div class="node core">CORE-RTR-01<br><span class="node-sub">100G / OK</span></div>
+                    <div class="node spine1">SPINE-SW-01<br><span class="node-sub">40G / Active</span></div>
+                    <div class="node spine2">SPINE-SW-02<br><span class="node-sub">40G / Active</span></div>
+                    <div class="node leaf" style="left: 10%;">LEAF-A01 (Storage)<br><span class="node-sub">Eth1/1</span></div>
+                    <div class="node leaf" style="left: 35%;" id="leaf-ai1">LEAF-B01 (AI NPU)<br><span class="node-sub">Eth1/2</span></div>
+                    <div class="node leaf" style="left: 60%;" id="leaf-ai2">LEAF-C01 (AI NPU)<br><span class="node-sub">Eth1/3</span></div>
+                    <div class="node leaf" style="left: 85%;">LEAF-D01 (Web)<br><span class="node-sub">Eth1/4</span></div>
+                </div>
+            </div>
+        </div>
+
+        {% if role == 'admin' %}
+        <div id="view-audit" class="view-section">
+            <div class="panel">
+                <div class="panel-title">
+                    <span>감사 로그 (Audit Trail)</span>
+                    <button class="btn" onclick="loadAuditLog()">새로고침</button>
+                </div>
+                <p class="panel-desc">모든 로그인/권한 작업/고위험 작업(제로화 등)이 기록됩니다. (데모: 프로세스 메모리 저장 — 실배포 시 영구 저장소 + SIEM 연동 필요)</p>
+                <table class="audit-table" id="audit-table">
+                    <thead>
+                        <tr><th>시각 (UTC)</th><th>사용자</th><th>작업</th><th>세부내용</th><th>결과</th></tr>
+                    </thead>
+                    <tbody id="audit-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

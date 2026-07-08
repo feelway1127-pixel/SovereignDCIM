@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>dcim.kr - 로그인</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <div class="logo">dcim<span>.kr</span></div>
+        <p class="login-sub">Sovereign AI Data Center Infrastructure Management</p>
+
+        {% if error %}
+        <div class="login-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="login-form">
+            <label for="username">아이디</label>
+            <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+
+            <button type="submit" class="btn btn-primary">로그인</button>
+        </form>
+
+        <div class="login-hint">
+            데모 계정 · admin / operator (비밀번호는 환경변수 DCIM_ADMIN_PASSWORD 참고)
+        </div>
+    </div>
+</body>
+</html>
