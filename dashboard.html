@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dcim.kr - Sovereign AI Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS 셋업 - static/css/style.css 에 분리해도 됩니다 */
+        :root { 
+            --bg: #0f111a; --panel: #161925; --border: #2a2d3d; 
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --blue: #3b82f6; --green: #10b981; --orange: #f59e0b; --red: #ef4444; 
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: #0b0d14; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .logo { padding: 20px; font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -1px; border-bottom: 1px solid var(--border); }
+        .logo span { color: var(--blue); }
+        .nav-item { padding: 12px 20px; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; border-left: 3px solid transparent; }
+        .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--blue); border-left-color: var(--blue); }
+        .user-info { margin-top: auto; padding: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+        
+        /* Main Workspace */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--panel); }
+        .content { flex: 1; padding: 20px; overflow-y: auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        
+        /* Cards */
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; }
+        .card-header { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .kpi-box { background: #0b0d14; border: 1px solid var(--border); padding: 15px; border-radius: 6px; position: relative; }
+        .kpi-val { font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 700; margin: 5px 0; }
+        .ai-badge { position: absolute; top: 15px; right: 15px; font-size: 10px; padding: 3px 6px; border-radius: 3px; background: rgba(59, 130, 246, 0.15); color: var(--blue); border: 1px solid var(--blue); }
+        .ai-badge.anomaly { background: rgba(239, 68, 68, 0.15); color: var(--red); border-color: var(--red); }
+        
+        /* Canvas & Logs */
+        .canvas-container { flex: 1; background: #000; border: 1px solid var(--border); border-radius: 4px; min-height: 300px; }
+        canvas { width: 100%; height: 100%; display: block; }
+        .audit-log { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text-muted); overflow-y: auto; flex: 1; max-height: 250px; background: #000; padding: 10px; border: 1px solid var(--border); }
+        .audit-entry { border-bottom: 1px solid #1e293b; padding: 5px 0; }
+        
+        /* Buttons & Modals */
+        .btn { padding: 8px 15px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--blue); color: var(--blue); }
+        .btn-zero { color: var(--text-muted); border-color: transparent; text-align: left; padding-left: 20px; }
+        .btn-zero:hover { color: var(--red); background: rgba(239, 68, 68, 0.1); border-color: var(--red); }
+        
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; align-items:center; justify-content:center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--panel); border: 1px solid var(--border); width: 450px; padding: 25px; border-radius: 6px; }
+        .input-pw { width: 100%; padding: 10px; margin: 15px 0; background: #000; border: 1px solid var(--border); color: #fff; box-sizing: border-box; font-family: 'JetBrains Mono'; }
+    </style>
+</head>
+<body>
+
+    <div class="modal" id="reauth-modal">
+        <div class="modal-content">
+            <h3 style="color: var(--red); margin-top:0;">⚠️ Hardware Zeroization</h3>
+            <p style="font-size:12px; color:var(--text-muted);">이 작업은 돌이킬 수 없으며, NIST SP 800-88 규격에 따라 모든 데이터와 암호화 키를 파기합니다. 승인하시려면 비밀번호를 다시 입력하십시오.</p>
+            <input type="password" id="reauth-pw" class="input-pw" placeholder="Admin Password">
+            <p id="reauth-error" style="color:var(--red); font-size:11px; display:none;">비밀번호가 일치하지 않습니다.</p>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" onclick="document.getElementById('reauth-modal').classList.remove('active')">취소</button>
+                <button class="btn" style="color:var(--red); border-color:var(--red);" onclick="executePurge()">승인 및 파기</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="logo">dcim<span>.kr</span></div>
+        <div style="padding: 15px 20px; font-size:10px; color:var(--text-muted); font-weight:700;">DASHBOARDS</div>
+        <div class="nav-item active">AI 인프라 통합 관제</div>
+        <div class="nav-item">전력 및 공조 (EPMS/BMS)</div>
+        <div class="nav-item">자산 및 실장도</div>
+        
+        <div class="user-info">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span>접속자: {{ display_name }} ({{ role }})</span>
+                <a href="/logout" style="color:var(--blue); text-decoration:none;">로그아웃</a>
+            </div>
+            {% if role == 'admin' %}
+            <div class="nav-item btn-zero" onclick="document.getElementById('reauth-modal').classList.add('active')" style="margin-left:-20px; width:100%; box-sizing:border-box;">
+                🔒 Sovereign 킬스위치
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <span style="font-weight:600;">AI 인프라 통합 관제 (SIMULATION MODE)</span>
+            <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--green); border:1px solid var(--green); padding:3px 8px; border-radius:3px;">OOB SECURE</span>
+        </div>
+        
+        <div class="content">
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <div class="card">
+                    <div class="card-header">
+                        <span>실시간 코어 지표 및 AI 예측</span>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn active" id="btn-load-10" onclick="setWorkload(0.1)">IDLE (10%)</button>
+                            <button class="btn" id="btn-load-50" onclick="setWorkload(0.5)">INFERENCE (50%)</button>
+                            <button class="btn" id="btn-load-90" onclick="setWorkload(0.9)">TRAINING (90%)</button>
+                        </div>
+                    </div>
+                    <div class="kpi-grid">
+                        <div class="kpi-box">
+                            <div class="card-header" style="margin-bottom:5px;">Total IT Power</div>
+                            <div class="kpi-val" id="val-power">0.0 <span style="font-size:14px; color:var(--text-muted);">kW</span></div>
+                            <div class="ai-badge" id="ai-power-badge">AI Predict: --</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="card-header" style="margin-bottom:5px;">Cooling Power</div>
+                            <div class="kpi-val" id="val-cooling">0.0 <span style="font-size:14px; color:var(--text-muted);">kW</span></div>
+                            <div class="ai-badge" id="ai-cooling-badge">AI Predict: --</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="card-header" style="margin-bottom:5px;">Facility PUE</div>
+                            <div class="kpi-val" id="val-pue" style="color:var(--blue);">1.00</div>
+                            <div class="ai-badge" id="ai-pue-badge">Trend: --</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="flex:1;">
+                    <div class="card-header">2D 랙 상면 열화상 맵 (Thermal Heatmap)</div>
+                    <div class="canvas-container"><canvas id="floorCanvas"></canvas></div>
+                </div>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:20px;">
+                <div class="card" style="height: 250px;">
+                    <div class="card-header">전력 소모 트렌드</div>
+                    <div style="flex:1; position:relative;"><canvas id="trendChart"></canvas></div>
+                </div>
+                <div class="card" style="flex:1;">
+                    <div class="card-header">시스템 감사 로그 (Audit Trail)</div>
+                    <div class="audit-log" id="audit-container">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
