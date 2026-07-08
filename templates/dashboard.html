@@ -2,174 +2,393 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>dcim.kr - Sovereign AI Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dcim.kr - Ultimate Sovereign AI Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #0f111a; --panel: #161925; --border: #2a2d3d; --text-main: #f8fafc; --text-muted: #94a3b8; --blue: #3b82f6; --green: #10b981; --red: #ef4444; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 250px; background: #0b0d14; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .logo { padding: 20px; font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -1px; border-bottom: 1px solid var(--border); }
+        :root { 
+            --bg: #0b0d14; --panel: #151822; --border: #2a2d3d; 
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --blue: #3b82f6; --green: #10b981; --orange: #f59e0b; --red: #ef4444; 
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; user-select: none; }
+        
+        /* ------------------------------------------------------------------
+           1. Sidebar & Hierarchical Tree View (경쟁사 벤치마킹)
+        ------------------------------------------------------------------- */
+        .sidebar { width: 260px; background: #07090e; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        .logo { padding: 20px; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;}
         .logo span { color: var(--blue); }
-        .nav-item { padding: 12px 20px; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; border-left: 3px solid transparent; }
-        .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--blue); border-left-color: var(--blue); }
-        .user-info { margin-top: auto; padding: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--panel); }
-        .content { flex: 1; padding: 20px; overflow-y: auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; }
-        .card-header { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; display: flex; justify-content: space-between; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        .kpi-box { background: #0b0d14; border: 1px solid var(--border); padding: 15px; border-radius: 6px; position: relative; }
-        .kpi-val { font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 700; margin: 5px 0; }
-        .ai-badge { position: absolute; top: 15px; right: 15px; font-size: 10px; padding: 3px 6px; border-radius: 3px; background: rgba(59, 130, 246, 0.15); color: var(--blue); border: 1px solid var(--blue); }
+        .badge-oob { font-size: 9px; padding: 3px 6px; background: rgba(16,185,129,0.1); border: 1px solid var(--green); color: var(--green); border-radius: 3px; font-family: 'JetBrains Mono'; }
+        
+        .tree-container { padding: 15px 10px; flex: 1; overflow-y: auto; font-size: 12px; color: var(--text-muted); }
+        .tree-header { font-size: 10px; font-weight: 700; color: #475569; margin-bottom: 10px; padding-left: 10px; letter-spacing: 0.5px;}
+        details { padding-left: 15px; margin-bottom: 2px; }
+        summary { cursor: pointer; padding: 6px; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
+        summary:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+        details[open] > summary { color: var(--blue); font-weight: 600; }
+        .tree-leaf { padding: 6px 10px 6px 30px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
+        .tree-leaf:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+        .tree-leaf.active { background: rgba(59, 130, 246, 0.15); color: var(--blue); border-left: 2px solid var(--blue); }
+
+        .user-info { padding: 15px; border-top: 1px solid var(--border); font-size: 12px; }
+        .btn-zero { color: var(--text-muted); padding: 10px; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 5px; opacity: 0.7; transition: 0.2s;}
+        .btn-zero:hover { color: var(--red); opacity: 1; background: rgba(239, 68, 68, 0.1); border-radius: 4px;}
+
+        /* ------------------------------------------------------------------
+           2. Main Workspace & Multi-Tabs
+        ------------------------------------------------------------------- */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+        .topbar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; background: var(--panel); }
+        
+        .nav-tabs { display: flex; gap: 2px; margin-right: auto; height: 100%; }
+        .tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 0 20px; cursor: pointer; border-bottom: 2px solid transparent; font-family: 'Inter'; transition: 0.2s;}
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); background: rgba(59, 130, 246, 0.05); }
+
+        .content-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .view-section { display: none; flex: 1; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
+        .view-section.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 15px; }
+        .panel-title { font-size: 13px; font-weight: 600; margin: 0 0 15px 0; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Global Controls & KPIs */
+        .global-header { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .kpi-box { background: #0b0d14; border: 1px solid var(--border); padding: 10px 15px; border-radius: 6px; position: relative; }
+        .kpi-val { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: 700; margin: 5px 0; }
+        .ai-badge { position: absolute; top: 10px; right: 10px; font-size: 9px; padding: 2px 4px; border-radius: 3px; background: rgba(59, 130, 246, 0.15); color: var(--blue); border: 1px solid var(--blue); font-family: 'JetBrains Mono';}
         .ai-badge.anomaly { background: rgba(239, 68, 68, 0.15); color: var(--red); border-color: var(--red); }
-        .canvas-container { flex: 1; background: #000; border: 1px solid var(--border); border-radius: 4px; min-height: 300px; }
+        
+        .workload-controls { display: flex; gap: 5px; height: 40px;}
+        .w-btn { flex: 1; background: #0b0d14; border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .w-btn:hover { border-color: var(--blue); color: var(--blue); }
+        .w-btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--blue); color: var(--blue); }
+        .w-btn.danger.active { background: rgba(239, 68, 68, 0.1); border-color: var(--red); color: var(--red); }
+
+        /* ------------------------------------------------------------------
+           Tab 1: Floor Plan (2D 열화상)
+        ------------------------------------------------------------------- */
+        .canvas-container { width: 100%; height: 350px; background: #000; border: 1px solid var(--border); border-radius: 4px; position: relative; }
         canvas { width: 100%; height: 100%; display: block; }
-        .audit-log { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text-muted); overflow-y: auto; flex: 1; min-height: 250px; background: #000; padding: 10px; border: 1px solid var(--border); }
-        .btn { padding: 8px 15px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: 0.2s; }
-        .btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--blue); color: var(--blue); }
-        .btn-zero { color: var(--text-muted); padding-left: 20px; cursor: pointer; }
-        .btn-zero:hover { color: var(--red); }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; align-items:center; justify-content:center; }
+        .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; }
+        
+        /* ------------------------------------------------------------------
+           Tab 2: Rack Elevation (U-레벨 실장도)
+        ------------------------------------------------------------------- */
+        .elevation-container { display: flex; gap: 30px; justify-content: center; background: #0b0d14; padding: 20px; border: 1px solid var(--border); border-radius: 4px; min-height: 400px; overflow-x: auto;}
+        .rack { width: 200px; background: #1a1d2d; border: 2px solid #334155; border-radius: 4px; padding: 4px; display: flex; flex-direction: column-reverse; gap: 2px; }
+        .rack-title { text-align: center; color: #fff; font-weight: bold; margin-bottom: 8px; font-size: 12px; background: #334155; padding: 4px; border-radius: 2px;}
+        .u-slot { height: 14px; background: #0f111a; border: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; font-family: 'JetBrains Mono'; font-size: 8px; color: #475569; cursor: pointer; transition: 0.2s;}
+        .u-slot:hover { border-color: var(--blue); filter: brightness(1.2); }
+        .u-server { background: #1e3a8a; border-color: #2563eb; color: #bfdbfe; }
+        .u-network { background: #064e3b; border-color: #059669; color: #a7f3d0; }
+        .u-storage { background: #78350f; border-color: #d97706; color: #fde68a; }
+        .u-blank { background: #000; border: 1px dashed #1e293b; }
+        .u-hot { background: #7f1d1d; border-color: #ef4444; color: #fecaca; animation: pulse-hot 1s infinite alternate; }
+        @keyframes pulse-hot { from { opacity: 0.8; } to { opacity: 1; box-shadow: 0 0 8px rgba(239,68,68,0.8); } }
+
+        /* ------------------------------------------------------------------
+           Tab 3: Network Topology
+        ------------------------------------------------------------------- */
+        .topo-container { width: 100%; height: 400px; background: #0b0d14; border: 1px solid var(--border); border-radius: 4px; position: relative; overflow: hidden; }
+        .node { position: absolute; background: var(--panel); border: 2px solid var(--border); border-radius: 6px; padding: 8px; width: 110px; text-align: center; font-size: 10px; font-weight: 600; z-index: 2; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .node.core { top: 20px; left: calc(50% - 63px); border-color: var(--orange); }
+        .node.spine { top: 120px; border-color: var(--green); }
+        .node.leaf { top: 250px; border-color: var(--blue); }
+        .topo-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .link { stroke: #334155; stroke-width: 2; fill: none; transition: 0.3s; }
+        .link.active { stroke: var(--blue); stroke-width: 3; stroke-dasharray: 4; animation: dash 1s linear infinite; }
+        .link.hot { stroke: var(--red); stroke-width: 3; }
+        @keyframes dash { to { stroke-dashoffset: -10; } }
+
+        /* ------------------------------------------------------------------
+           Modals & Misc
+        ------------------------------------------------------------------- */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999; align-items:center; justify-content:center; }
         .modal.active { display: flex; }
-        .modal-content { background: var(--panel); border: 1px solid var(--border); width: 450px; padding: 25px; border-radius: 6px; }
-        .input-pw { width: 100%; padding: 10px; margin: 15px 0; background: #000; border: 1px solid var(--border); color: #fff; font-family: 'JetBrains Mono'; }
+        .modal-content { background: var(--panel); border: 1px solid var(--red); width: 450px; padding: 25px; border-radius: 6px; }
+        .input-pw { width: 100%; padding: 10px; margin: 15px 0; background: #000; border: 1px solid var(--border); color: #fff; box-sizing: border-box; font-family: 'JetBrains Mono'; border-radius: 4px;}
+        .input-pw:focus { border-color: var(--red); outline: none;}
+        .audit-log { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-muted); overflow-y: auto; height: 150px; background: #000; padding: 10px; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
+
     <div class="modal" id="reauth-modal">
         <div class="modal-content">
-            <h3 style="color: var(--red); margin-top:0;">⚠️ Hardware Zeroization</h3>
-            <p style="font-size:12px; color:var(--text-muted);">NIST SP 800-88 규격에 따라 모든 데이터와 암호화 키를 파기합니다. 비밀번호를 재입력하십시오.</p>
-            <input type="password" id="reauth-pw" class="input-pw" placeholder="Admin Password">
-            <p id="reauth-error" style="color:var(--red); font-size:11px; display:none;">비밀번호가 일치하지 않습니다.</p>
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" onclick="document.getElementById('reauth-modal').classList.remove('active')">취소</button>
-                <button class="btn" style="color:var(--red); border-color:var(--red);" onclick="executePurge()">승인 및 파기</button>
+            <h3 style="color: var(--red); margin-top:0; display:flex; align-items:center; gap:10px;">⚠️ Hardware Zeroization</h3>
+            <p style="font-size:12px; color:var(--text-muted); line-height: 1.5;">NIST SP 800-88 규격에 따라 모든 데이터와 암호화 키를 물리적으로 파기합니다. 승인하시려면 <strong>관리자 비밀번호</strong>를 다시 입력하십시오.</p>
+            <input type="password" id="reauth-pw" class="input-pw" placeholder="Enter Admin Password">
+            <p id="reauth-error" style="color:var(--red); font-size:12px; display:none; font-weight:bold;">비밀번호가 일치하지 않거나 권한이 없습니다.</p>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
+                <button class="w-btn" style="padding: 8px 15px;" onclick="document.getElementById('reauth-modal').classList.remove('active')">취소</button>
+                <button class="w-btn" style="padding: 8px 15px; color:#fff; background:var(--red); border-color:var(--red);" onclick="executePurge()">승인 및 파기</button>
             </div>
         </div>
     </div>
 
     <div class="sidebar">
-        <div class="logo">dcim<span>.kr</span></div>
-        <div class="nav-item active" style="margin-top:20px;">AI 인프라 통합 관제</div>
-        <div class="nav-item">전력 및 공조 (EPMS/BMS)</div>
+        <div class="logo">dcim<span>.kr</span> <div class="badge-oob">OOB SECURE</div></div>
+        
+        <div class="tree-header" style="margin-top: 20px;">ASSET HIERARCHY</div>
+        <div class="tree-container">
+            <details open>
+                <summary>🏢 Tainan HQ Site</summary>
+                <details open>
+                    <summary>📁 2F Server Room</summary>
+                    <div class="tree-leaf">↳ ROW-A (Storage)</div>
+                    <div class="tree-leaf active">↳ ROW-B (AI NPU)</div>
+                    <div class="tree-leaf">↳ ROW-C (Network)</div>
+                </details>
+                <details>
+                    <summary>📁 3F Server Room</summary>
+                    <div class="tree-leaf">↳ ROW-A (Legacy)</div>
+                </details>
+                <details>
+                    <summary>⚙️ Facility Systems</summary>
+                    <div class="tree-leaf">↳ UPS Room</div>
+                    <div class="tree-leaf">↳ Chiller Plant</div>
+                </details>
+            </details>
+        </div>
+        
         <div class="user-info">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <span>접속자: {{ display_name }}</span><a href="/logout" style="color:var(--blue); text-decoration:none;">로그아웃</a>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span>접속자: {{ display_name }}</span>
+                <a href="/logout" style="color:var(--blue); text-decoration:none;">로그아웃</a>
             </div>
             {% if role == 'admin' %}
-            <div class="btn-zero" onclick="document.getElementById('reauth-modal').classList.add('active')">🔒 Sovereign 킬스위치</div>
+            <div class="btn-zero" onclick="document.getElementById('reauth-modal').classList.add('active')">
+                🔒 Sovereign 킬스위치 (Admin)
+            </div>
             {% endif %}
         </div>
     </div>
 
     <div class="main">
         <div class="topbar">
-            <span style="font-weight:600;">AI 인프라 관제 (IoT Sensor Mode)</span>
-            <span style="font-family:'JetBrains Mono'; font-size:11px; color:var(--green); border:1px solid var(--green); padding:3px 8px; border-radius:3px;">OOB SECURE</span>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('floorplan', this)">2D 상면 관제 (Floor Plan)</button>
+                <button class="tab-btn" onclick="switchTab('elevation', this)">U-레벨 실장도 (Elevation)</button>
+                <button class="tab-btn" onclick="switchTab('topology', this)">네트워크 토폴로지 (Topology)</button>
+            </div>
+            <span style="font-size: 11px; color: var(--text-muted);">SIMULATION MODE</span>
         </div>
         
-        <div class="content">
-            <div style="display:flex; flex-direction:column; gap:20px;">
-                <div class="card">
-                    <div class="card-header">
-                        <span>실시간 IoT 메트릭 및 AI 예측</span>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn active" onclick="setWorkload(0.1, this)">IDLE (10%)</button>
-                            <button class="btn" onclick="setWorkload(0.5, this)">INFERENCE (50%)</button>
-                            <button class="btn" onclick="setWorkload(0.9, this)">TRAINING (90%)</button>
-                        </div>
+        <div class="content-area">
+            <div class="global-header">
+                <div class="panel" style="padding: 15px;">
+                    <div class="panel-title" style="margin-bottom: 10px; font-size:12px;">AI Workload Controller (K8s)</div>
+                    <div class="workload-controls">
+                        <button class="w-btn active" onclick="setWorkload(0.1, this)">IDLE (대기)</button>
+                        <button class="w-btn" onclick="setWorkload(0.5, this)">INFERENCE</button>
+                        <button class="w-btn danger" onclick="setWorkload(0.9, this)">LLM TRAINING (풀부하)</button>
                     </div>
+                </div>
+                
+                <div class="panel" style="padding: 15px;">
                     <div class="kpi-grid">
                         <div class="kpi-box">
-                            <div style="font-size:12px; color:var(--text-muted);">Total IT Power</div>
-                            <div class="kpi-val" id="val-power">0.0</div>
-                            <div class="ai-badge" id="ai-power-badge">AI Predict: --</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Total IT Power</div>
+                            <div class="kpi-val" id="val-power">0.0 <span style="font-size:12px; color:var(--text-muted);">kW</span></div>
+                            <div class="ai-badge" id="ai-power-badge">AI: --</div>
                         </div>
                         <div class="kpi-box">
-                            <div style="font-size:12px; color:var(--text-muted);">Cooling Power</div>
-                            <div class="kpi-val" id="val-cooling">0.0</div>
-                            <div class="ai-badge" id="ai-cooling-badge">AI Predict: --</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Cooling Power</div>
+                            <div class="kpi-val" id="val-cooling">0.0 <span style="font-size:12px; color:var(--text-muted);">kW</span></div>
+                            <div class="ai-badge" id="ai-cooling-badge">AI: --</div>
                         </div>
                         <div class="kpi-box">
-                            <div style="font-size:12px; color:var(--text-muted);">Facility PUE</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Facility PUE</div>
                             <div class="kpi-val" id="val-pue" style="color:var(--blue);">1.00</div>
                             <div class="ai-badge" id="ai-pue-badge">Trend: --</div>
                         </div>
                     </div>
                 </div>
-                <div class="card" style="flex:1;">
-                    <div class="card-header">2D 센서 열화상 맵 (Redfish API 연동)</div>
-                    <div class="canvas-container"><canvas id="floorCanvas"></canvas></div>
+            </div>
+
+            <div id="tab-floorplan" class="view-section active">
+                <div class="grid-2">
+                    <div class="panel" style="margin-bottom:0;">
+                        <div class="panel-title">AI Predictive Thermal Map (2F Server Room)</div>
+                        <div class="canvas-container"><canvas id="floorCanvas"></canvas></div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:15px;">
+                        <div class="panel" style="flex:1; margin-bottom:0;">
+                            <div class="panel-title">Power Trend (IT vs Cooling)</div>
+                            <div style="flex:1; position:relative; min-height: 150px;"><canvas id="trendChart"></canvas></div>
+                        </div>
+                        <div class="panel" style="flex:1; margin-bottom:0;">
+                            <div class="panel-title">Audit Trail (System Logs)</div>
+                            <div class="audit-log" id="audit-container"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div style="display:flex; flex-direction:column; gap:20px;">
-                <div class="card" style="height: 250px;">
-                    <div class="card-header">전력 소모 트렌드</div>
-                    <div style="flex:1; position:relative;"><canvas id="trendChart"></canvas></div>
-                </div>
-                <div class="card" style="flex:1;">
-                    <div class="card-header">시스템 감사 로그 (Audit Trail)</div>
-                    <div class="audit-log" id="audit-container"></div>
+
+            <div id="tab-elevation" class="view-section">
+                <div class="panel" style="flex: 1; margin-bottom:0; display:flex; flex-direction:column;">
+                    <div class="panel-title">U-Level Rack Elevation & Thermal Fusion (ROW-B)</div>
+                    <p style="font-size:12px; color:var(--text-muted); margin-top:-10px; margin-bottom:20px;">AI 학습 부하 시 특정 NPU 서버 슬롯(U)에서 발생하는 국지적 열 폭주를 실시간으로 추적합니다.</p>
+                    <div class="elevation-container" id="rack-container">
+                        </div>
+                    <div style="display:flex; gap:20px; justify-content:center; margin-top:20px; font-size:11px; font-family:'JetBrains Mono'; color:var(--text-muted);">
+                        <span style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; background:#1e3a8a;"></div> AI Compute (NPU)</span>
+                        <span style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; background:#064e3b;"></div> Switch (ToR)</span>
+                        <span style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; background:#78350f;"></div> SAN Storage</span>
+                        <span style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; background:#7f1d1d;"></div> Thermal Warning (Hotspot)</span>
+                    </div>
                 </div>
             </div>
+
+            <div id="tab-topology" class="view-section">
+                <div class="panel" style="flex: 1; margin-bottom:0;">
+                    <div class="panel-title">Dynamic AI Network Topology</div>
+                    <p style="font-size:12px; color:var(--text-muted); margin-top:-10px; margin-bottom:20px;">HPC 클러스터의 분산 학습 트래픽에 따른 스위치 병목 및 링크 발열 상태를 시각화합니다.</p>
+                    <div class="topo-container">
+                        <svg class="topo-svg" id="topo-svg"></svg>
+                        <div class="node core">CORE-RTR-01<br><span style="font-weight:normal; color:var(--text-muted);">400G / OK</span></div>
+                        
+                        <div class="node spine" style="left: 20%;">SPINE-SW-01<br><span style="font-weight:normal; color:var(--text-muted);">100G / Active</span></div>
+                        <div class="node spine" style="left: 65%;">SPINE-SW-02<br><span style="font-weight:normal; color:var(--text-muted);">100G / Active</span></div>
+                        
+                        <div class="node leaf" style="left: 5%;">LEAF-A01 (Storage)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/1</span></div>
+                        <div class="node leaf" style="left: 30%;" id="leaf-ai1">LEAF-B01 (AI NPU)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/2</span></div>
+                        <div class="node leaf" style="left: 55%;" id="leaf-ai2">LEAF-B02 (AI NPU)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/3</span></div>
+                        <div class="node leaf" style="left: 80%;">LEAF-C01 (MGMT)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/4</span></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        const ctxChart = document.getElementById('trendChart').getContext('2d');
-        const trendChart = new Chart(ctxChart, {
+        // --- 탭 전환 로직 ---
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            if(tabId === 'floorplan') resizeCanvas();
+        }
+
+        // --- Chart.js ---
+        Chart.defaults.color = '#64748b'; Chart.defaults.font.family = 'Inter';
+        const trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
             type: 'line',
-            data: { 
-                labels: Array(30).fill(''), 
-                datasets: [
-                    { label: 'IT Power', data: Array(30).fill(0), borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, tension: 0.2 },
-                    { label: 'Cooling', data: Array(30).fill(0), borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.2 }
-                ]
-            },
+            data: { labels: Array(30).fill(''), datasets: [
+                { label: 'IT', data: Array(30).fill(0), borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, tension: 0.2 },
+                { label: 'Cooling', data: Array(30).fill(0), borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.2 }
+            ]},
             options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { display: false }, y: { grid: { color: '#1e293b' } } }, plugins: { legend: { display: false } } }
         });
 
+        // --- 1. Floor Plan ---
         const canvas = document.getElementById('floorCanvas');
         const ctx = canvas.getContext('2d');
         function resizeCanvas() { if(canvas.parentElement) { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; } }
         window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
-        function drawFloorPlan(racks) {
+        function drawFloorPlan(load) {
+            if(canvas.width === 0) return; // 탭 숨김 상태 방어
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if(!racks || racks.length === 0) return;
             
-            const cols = 12; const rows = 3;
+            const rows = 3; const cols = 10;
             const w = Math.min(40, (canvas.width - 100) / cols); 
             const h = 60; const spX = 10; const spY = 50;
             const startX = (canvas.width - (cols * (w + spX))) / 2;
             const startY = 30;
 
-            let idx = 0;
             for(let r=0; r<rows; r++) {
                 ctx.fillStyle = '#475569'; ctx.font = '600 11px Inter';
-                if(r===0) ctx.fillText('ZONE A: STORAGE', startX - 10, startY - 10);
-                if(r===1) ctx.fillText('ZONE B: HIGH-DENSITY NPU', startX - 10, startY + h + spY - 10);
+                if(r===0) ctx.fillText('ZONE A: STORAGE (ROW-A)', startX - 10, startY - 10);
+                if(r===1) ctx.fillText('ZONE B: AI NPU (ROW-B)', startX - 10, startY + h + spY - 10);
 
                 for(let c=0; c<cols; c++) {
-                    if(idx >= racks.length) break;
-                    let temp = racks[idx].temp;
+                    let isAI = (r===1 || r===2);
+                    let temp = isAI ? 22 + (load * 60) + (Math.random()*4-2) : 21 + Math.random()*2;
                     let rx = startX + c * (w + spX); let ry = startY + r * (h + spY);
                     
-                    let color = temp < 30 ? '#3b82f6' : temp < 60 ? '#10b981' : temp < 80 ? '#f59e0b' : '#ef4444';
+                    let color = temp < 28 ? '#3b82f6' : temp < 50 ? '#10b981' : temp < 70 ? '#f59e0b' : '#ef4444';
                     ctx.fillStyle = color; ctx.fillRect(rx, ry, w, h);
                     ctx.strokeStyle = '#0f111a'; ctx.lineWidth = 2; ctx.strokeRect(rx, ry, w, h);
-                    idx++;
                 }
             }
         }
 
+        // --- 2. Rack Elevation ---
+        function initElevation() {
+            const container = document.getElementById('rack-container');
+            container.innerHTML = '';
+            const racks = ['R2-B01 (NPU Master)', 'R2-B02 (NPU Worker 1)', 'R2-B03 (NPU Worker 2)'];
+            
+            racks.forEach((name, idx) => {
+                let html = `<div class="rack"><div class="rack-title">${name}</div>`;
+                for(let u=1; u<=42; u++) {
+                    let cls = 'u-blank'; let lbl = '';
+                    if(u >= 40) { cls = 'u-network'; lbl = 'ToR-SW'; }
+                    else if(u >= 5 && u <= 36) { cls = 'u-server'; lbl = `HGX-NODE-${u}`; }
+                    else if(u <= 3) { cls = 'u-storage'; lbl = 'SAN-DS'; }
+                    
+                    html += `<div class="u-slot ${cls}" id="u-${idx}-${u}"><span>${u}U</span> <span>${lbl}</span></div>`;
+                }
+                html += `</div>`;
+                container.innerHTML += html;
+            });
+        }
+        initElevation();
+
+        function updateElevation(load) {
+            for(let idx=0; idx<3; idx++) {
+                for(let u=5; u<=36; u++) {
+                    let el = document.getElementById(`u-${idx}-${u}`);
+                    if(el) {
+                        if(load > 0.8 && Math.random() > 0.6) el.classList.add('u-hot');
+                        else el.classList.remove('u-hot');
+                    }
+                }
+            }
+        }
+
+        // --- 3. Topology ---
+        function drawTopology(load) {
+            const svg = document.getElementById('topo-svg');
+            if(!svg) return;
+            // Core -> Spine -> Leaf connections
+            const links = [
+                {x1:50, y1:10, x2:25, y2:35}, {x1:50, y1:10, x2:70, y2:35}, // C -> S
+                {x1:25, y1:35, x2:10, y2:70}, {x1:25, y1:35, x2:35, y2:70}, // S1 -> L1, L2
+                {x1:70, y1:35, x2:60, y2:70}, {x1:70, y1:35, x2:85, y2:70}  // S2 -> L3, L4
+            ];
+            
+            let html = '';
+            links.forEach((l, i) => {
+                let cls = 'link';
+                // L2, L3 are AI nodes (index 3 and 4)
+                if((i===3 || i===4) && load > 0.2) cls = 'link active';
+                if((i===3 || i===4) && load > 0.8) cls = 'link hot active';
+                html += `<path d="M${l.x1}% ${l.y1}% C${l.x1}% ${l.y1+15}%, ${l.x2}% ${l.y2-15}%, ${l.x2}% ${l.y2}%" class="${cls}" />`;
+            });
+            svg.innerHTML = html;
+            
+            let ai1 = document.getElementById('leaf-ai1'); let ai2 = document.getElementById('leaf-ai2');
+            if(ai1 && ai2) {
+                if(load > 0.8) { ai1.style.borderColor = 'var(--red)'; ai2.style.borderColor = 'var(--red)'; }
+                else { ai1.style.borderColor = 'var(--blue)'; ai2.style.borderColor = 'var(--blue)'; }
+            }
+        }
+
+        // --- API & State Sync ---
         function setWorkload(load, btn) {
-            document.querySelectorAll('.card-header .btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.w-btn').forEach(b => b.classList.remove('active', 'danger'));
             btn.classList.add('active');
+            if(load > 0.8) btn.classList.add('danger');
             fetch('/api/v1/control/workload', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ target_workload: load }) });
         }
 
@@ -186,7 +405,7 @@
                 const ai = data.ai_insights;
                 if(ai) {
                     const pb = document.getElementById('ai-power-badge');
-                    pb.innerText = `+30s: ${ai.it_power_forecast_30s || '--'} kW`;
+                    pb.innerText = `+30s Predict: ${ai.it_power_forecast_30s || '--'} kW`;
                     if(ai.it_power_anomaly && ai.it_power_anomaly.is_anomaly) {
                         pb.classList.add('anomaly'); pb.innerText = `! SPIKE DETECTED`;
                     } else { pb.classList.remove('anomaly'); }
@@ -197,7 +416,10 @@
                 trendChart.data.datasets[1].data.push(data.cooling_power_kw); trendChart.data.datasets[1].data.shift();
                 trendChart.update();
                 
-                drawFloorPlan(data.rack_data);
+                // Update all views regardless of active tab to maintain sync
+                drawFloorPlan(data.workload);
+                updateElevation(data.workload);
+                drawTopology(data.workload);
 
             } catch (err) {}
         }
@@ -209,7 +431,7 @@
                 if(!res.ok) return;
                 const data = await res.json();
                 document.getElementById('audit-container').innerHTML = data.entries.map(e => `
-                    <div class="audit-entry">
+                    <div class="audit-entry" style="border-bottom:1px solid #1e293b; padding:4px 0;">
                         <span style="color:#3b82f6">[${e.timestamp.split('T')[1].slice(0,-1)}]</span> 
                         <span style="color:#10b981;">${e.user}</span>: <span style="color:#e2e8f0">${e.action}</span> 
                         <span style="color:#94a3b8">${e.detail}</span>
@@ -223,12 +445,13 @@
         setInterval(fetchAuditLog, 2000);
         fetchAuditLog();
 
+        // --- Zeroization ---
         async function executePurge() {
             const pw = document.getElementById('reauth-pw').value;
-            const res = await fetch('/api/v1/control/purge', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ password: pw }) });
+            const res = await fetch('/api/v1/control/purge', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ password: pw, target: 'ALL_NPU_NODES' }) });
             if(res.ok) {
                 document.getElementById('reauth-modal').classList.remove('active');
-                alert("NIST SP 800-88 파기 완료.");
+                alert("NIST SP 800-88 파기 명령이 인가되었습니다. (시뮬레이션 로그 생성 완료)");
                 document.getElementById('reauth-pw').value = '';
                 document.getElementById('reauth-error').style.display = 'none';
                 fetchAuditLog();
