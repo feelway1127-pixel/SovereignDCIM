@@ -12,7 +12,7 @@ SYSTEM_LOGS = [
     {"timestamp": int(time.time()) - 30, "level": "INFO", "message": "Modbus TCP Gateway Link Established."}
 ]
 
-# 완전히 결합된 하이테크 UI 마크업 및 자바스크립트 통신 엔진
+# 끊김 없이 완벽하게 복원된 하이테크 UI 마크업 및 자바스크립트 가속 통신 엔진
 MAIN_HTML = """
 <!DOCTYPE html>
 <html lang="ko">
@@ -162,55 +162,4 @@ MAIN_HTML = """
         .panel h2 {
             margin: 0 0 16px 0;
             font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-muted);
-            padding-bottom: 12px;
-        }
-
-        /* 🗺️ 고해상도 2D 평면도 캔버스 컨테이너 */
-        .floor-plan-container {
-            position: relative;
-            width: 100%;
-            height: 520px;
-            background: #020305;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* 🎛️ 정밀 인터랙션 툴팁 */
-        #tooltip {
-            position: absolute;
-            background: rgba(7, 9, 15, 0.96);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            color: var(--text-main);
-            padding: 12px 16px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            line-height: 1.6;
-            pointer-events: none;
-            display: none;
-            z-index: 100;
-            border-radius: 6px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            backdrop-filter: blur(4px);
-        }
-
-        .legend {
-            position: absolute;
-            bottom: 16px;
-            left: 16px;
-            background: rgba(4, 5,
+            font-weight:
