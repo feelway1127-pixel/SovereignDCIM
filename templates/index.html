@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dcim.kr - SOVEREIGN MASTER CONTROL</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #040508;
+            --panel-bg: #090b11;
+            --border-muted: #161a23;
+            --border-glow: #222938;
+            --neon-green: #00ff66;
+            --neon-blue: #00e5ff;
+            --neon-orange: #ff9900;
+            --neon-red: #ff2a5f;
+            --text-main: #f1f5f9;
+            --text-muted: #4f5e75;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', 'Malgun Gothic', sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(22, 26, 35, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(22, 26, 35, 0.3) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .container {
+            max-width: 1720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-muted);
+            padding: 14px 24px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .brand {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -1px;
+            margin: 0;
+        }
+
+        .brand span {
+            color: var(--neon-red);
+        }
+
+        .status-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--neon-green);
+            background: rgba(0, 255, 102, 0.04);
+            border: 1px solid rgba(0, 255, 102, 0.2);
+            padding: 6px 16px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            animation: pulse 1.6s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.6); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 255, 102, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
+        }
+
+        .meta-strip {
+            display: flex;
+            gap: 16px;
+        }
+
+        .meta-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-muted);
+            padding: 16px 24px;
+            border-radius: 10px;
+            flex: 1;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .meta-box label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .meta-box span {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--neon-blue);
+            margin-top: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 18px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-muted);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h2 {
+            margin: 0 0 16px 0;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-muted);
+            padding-bottom: 12px;
+        }
+
+        .floor-plan-container {
+            position: relative;
+            width: 100%;
+            height: 520px;
+            background: #020305;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #tooltip {
+            position: absolute;
+            background: rgba(7, 9, 15, 0.96);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: var(--text-main);
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(4, 5, 8, 0.9);
+            border: 1px solid var(--border-muted);
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .color-bar {
+            width: 160px;
+            height: 6px;
+            background: linear-gradient(90deg, #00e5ff 0%, #00ff66 35%, #ff9900 70%, #ff2a5f 100%);
+            margin-top: 6px;
+            border-radius: 2px;
+        }
+
+        .chart-wrapper {
+            height: 220px;
+            position: relative;
+        }
+
+        .terminal-box {
+            background: #030406;
+            border: 1px solid #11151d;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #5c6f8a;
+            line-height: 1.8;
+            height: 110px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .command-box {
+            background: rgba(255, 42, 95, 0.01);
+            border: 1px dashed rgba(255, 42, 95, 0.15);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .kill-btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--neon-red);
+            color: var(--neon-red);
+            padding: 14px;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', sans-serif;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .kill-btn:hover {
+            background: var(--neon-red);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 42, 95, 0.35);
+        }
+
+        .cooling-alert {
+            font-size: 11px;
+            color: var(--neon-blue);
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="brand">dcim<span>.kr</span></h1>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <div id="connection-status-text">AIR-GAPPED SOVEREIGN ENVIRONMENT ACTIVE</div>
+            </div>
+            <div style="font-family: 'JetBrains Mono'; font-size: 13px; color: var(--text-muted);">[MASTER_SESSION]</div>
+        </div>
+
+        <div class="meta-strip">
+            <div class="meta-box">
+                <label>Data Center Power Usage Effectiveness (PUE)</label>
+                <span id="val-pue">0.00</span>
+            </div>
+            <div class="meta-box">
+                <label>Total Infrastructure Facility Power Supply</label>
+                <span id="val-power">0.0 kW</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel">
+                <h2>
+                    <span>📊 2D DATA CENTER FLOOR PLAN (LIVE HEATMAP)</span>
+                    <span id="cooling-status" class="cooling-alert">CRAC PRE-COOLING SYSTEM OVERFLOW ACTIVE</span>
+                </h2>
+                <div class="floor-plan-container">
+                    <canvas id="floorCanvas"></canvas>
+                    <div id="tooltip"></div>
+                    <div class="legend">
+                        THERMAL DISTRIBUTION RANGE
+                        <div class="color-bar"></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:4px; font-weight:700;">
+                            <span>20°C</span><span>80°C</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 18px;">
+                <div class="panel">
+                    <h2><span>⚡ INTRA_FACILITY POWER AGGREGATION TREND (kW)</span></h2>
+                    <div class="chart-wrapper">
+                        <canvas id="thermalChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="panel" style="flex: 1;">
+                    <h2><span>⚠️ SECURE INTEGRITY AUDIT TELEMETRY</span></h2>
+                    <div class="terminal-box" id="log-terminal"></div>
+                    
+                    <div class="command-box">
+                        <div style="font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; text-align: left; line-height: 1.6;">
+                            • HOST RANGE: A-ROW HIGH DENSITY POD<br>
+                            • VOLATILE EFUSE KEY STRUCTURE: INTACT
+                        </div>
+                        <button class="kill-btn" id="btn-purge">INITIATE CRYPTO-SHREDDING</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let serverRacks = [];
+        let powerMemoryBuffer = Array(25).fill(130);
+        let connectionRetryCount = 0;
+
+        const canvas = document.getElementById('floorCanvas');
+        const ctx = canvas.getContext('2d');
+        const tooltip = document.getElementById('tooltip');
+        
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function getColorForTemp(temp) {
+            if (temp < 25) return '#00e5ff';
+            if (temp < 40) return '#00ff66';
+            if (temp < 60) return '#ff9900';
+            return '#ff2a5f';
+        }
+
+        function drawFloorPlan() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (serverRacks.length === 0) return;
+
+            const cols = 12; const rackWidth = 38; const rackHeight = 58; const spacingX = 14; const spacingY = 76;
+            let startX = (canvas.width - (cols * (rackWidth + spacingX))) / 2;
+            let startY = 40;
+            
+            ctx.fillStyle = '#161a23';
+            ctx.font = 'bold 11px "JetBrains Mono"';
+            ctx.fillText('=> COLD AISLE GRID SYSTEM 01', startX, startY + rackHeight + 42);
+            ctx.fillText('=> HOT AISLE GRID SYSTEM 01', startX, startY + rackHeight * 2 + spacingY * 1 + 42);
+
+            serverRacks.forEach((rack, index) => {
+                const r = Math.floor(index / cols);
+                const c = index % cols;
+                const posX = startX + c * (rackWidth + spacingX);
+                const posY = startY + r * (rackHeight + spacingY);
+                
+                rack.coords = { x1: posX, y1: posY, x2: posX + rackWidth, y2: posY + rackHeight };
+
+                if (rack.temperature_c > 65) {
+                    ctx.shadowColor = getColorForTemp(rack.temperature_c);
+                    ctx.shadowBlur = 15;
+                } else { ctx.shadowBlur = 0; }
+                
+                ctx.fillStyle = getColorForTemp(rack.temperature_c);
+                ctx.fillRect(posX, posY, rackWidth, rackHeight);
+                
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#020305';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(posX, posY, rackWidth, rackHeight);
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+                for(let i = 5; i < rackHeight; i += 8) {
+                    ctx.fillRect(posX + 3, posY + i, rackWidth - 6, 2);
+                }
+            });
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            let hoveredTarget = null;
+            for (let rack of serverRacks) {
+                if (rack.coords && mouseX >= rack.coords.x1 && mouseX <= rack.coords.x2 &&
+                    mouseY >= rack.coords.y1 && mouseY <= rack.coords.y2) {
+                    hoveredTarget = rack;
+                    break;
+                }
+            }
+
+            if (hoveredTarget) {
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 16) + 'px';
+                tooltip.style.top = (e.clientY + 16) + 'px';
+                tooltip.innerHTML = `
+                    <span style="color:var(--text-muted)">REF:</span> <strong style="color:#ffffff">${hoveredTarget.id}</strong><br>
+                    <span style="color:var(--text-muted)">TYPE:</span> ${hoveredTarget.node_class === 'HPC_ACCELERATOR' ? 'HPC ACCELERATOR (AI)' : 'GENERAL STORAGE'}<br>
+                    <span style="color:var(--text-muted)">HEAT:</span> <span style="color:${getColorForTemp(hoveredTarget.temperature_c)}; font-weight:700;">${hoveredTarget.temperature_c}°C</span><br>
+                    <span style="color:var(--text-muted)">LOAD:</span> ${hoveredTarget.power_consumption_kw} kW
+                `;
+            } else { tooltip.style.display = 'none'; }
+        });
+
+        canvas.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+
+        const chartCtx = document.getElementById('thermalChart').getContext('2d');
+        const chartGrad = chartCtx.createLinearGradient(0, 0, 0, 200);
+        chartGrad.addColorStop(0, 'rgba(0, 229, 255, 0.15)');
+        chartGrad.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
+
+        const thermalChart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: Array(25).fill(''),
+                datasets: [{
+                    label: 'Aggregate Demand',
+                    data: powerMemoryBuffer,
+                    borderColor: '#00e5ff',
+                    backgroundColor: chartGrad,
+                    borderWidth: 2,
+                    fill: true,
+                    pointRadius: 0,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                scales: {
+                    y: { 
+                        min: 90, max: 280, 
+                        grid: { color: '#131822' },
+                        ticks: { color: '#4f5e75', font: { family: 'JetBrains Mono', size: 10 } }
+                    },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        async function runTelemetrySyncCycle() {
+            try {
+                const response = await fetch('/api/v1/telemetry');
+                if (!response.ok) throw new Error('Data Link Interrupted');
+                
+                const data = await response.json();
+                connectionRetryCount = 0;
+                
+                document.getElementById('connection-status-text').innerText = "AIR-GAPPED SOVEREIGN ENVIRONMENT ACTIVE";
+                document.getElementById('connection-status-text').parentElement.style.color = "var(--neon-green)";
+
+                serverRacks = data.assets;
+                
+                document.getElementById('val-pue').innerText = data.summary.pue.toFixed(2);
+                document.getElementById('val-power').innerText = data.summary.total_power_kw.toFixed(1) + " kW";
+                
+                if (data.summary.load_factor > 0.82) {
+                    document.getElementById('cooling-status').style.display = 'inline';
+                } else {
+                    document.getElementById('cooling-status').style.display = 'none';
+                }
+
+                drawFloorPlan();
+
+                powerMemoryBuffer.push(data.summary.total_power_kw);
+                if (powerMemoryBuffer.length > 25) powerMemoryBuffer.shift();
+                thermalChart.data.datasets[0].data = powerMemoryBuffer;
+                thermalChart.update();
+
+                const logTerminal = document.getElementById('log-terminal');
+                logTerminal.innerHTML = '';
+                data.logs.forEach(log => {
+                    const logLine = document.createElement('div');
+                    logLine.style.color = log.level === 'WARN' ? 'var(--neon-orange)' : log.level === 'CRITICAL' ? 'var(--neon-red)' : '#5c6f8a';
+                    logLine.innerHTML = `[${new Date(log.timestamp * 1000).toISOString().slice(11, 19)}] [${log.level}] ${log.message}`;
+                    logTerminal.appendChild(logLine);
+                });
+
+            } catch (err) {
+                connectionRetryCount++;
+                document.getElementById('connection-status-text').innerText = `LINK DOWN. RETRYING ATTEMPT #${connectionRetryCount}...`;
+                document.getElementById('connection-status-text').parentElement.style.color = "var(--neon-red)";
+                document.getElementById('log-terminal').innerHTML = `<div style="color:var(--neon-red); font-weight:800;">[CRITICAL] BACKEND PIPELINE DISCONNECTED. ATTEMPTING RETRY...</div>`;
+            }
+        }
+
+        document.getElementById('btn-purge').addEventListener('click', async () => {
+            const confirmAction = confirm("eFuse 물리적 크립토 자폭 프로토콜을 가동하시겠습니까?\n인가 시 모든 암호 키 가용 데이터가 소멸합니다.");
+            if (!confirmAction) return;
+            
+            try {
+                const res = await fetch('/api/v1/control/purge', { method: 'POST' });
+                if (res.ok) {
+                    alert("Crypto-Shredding 명령 인가 성공. 제어 로깅 트레일을 확인하십시오.");
+                    runTelemetrySyncCycle();
+                }
+            } catch (e) { alert("물리 망 제어 명령 송신에 실패했습니다."); }
+        });
+
+        setInterval(runTelemetrySyncCycle, 1000);
+        
+        setTimeout(() => {
+            resizeCanvas();
+            runTelemetrySyncCycle();
+        }, 100);
+    </script>
+</body>
+</html>

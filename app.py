@@ -1,10 +1,11 @@
-from flask import Flask, jsonify, render_template_string, request
+from flask import Flask, jsonify, render_template, request
 import random
 import time
 import math
 import os
 
-app = Flask(__name__)
+# templates 폴더를 참조하도록 설정
+app = Flask(__name__, template_folder='templates')
 
 # 시스템 가동 이후 누적되는 관제 마스터 로그 버퍼
 SYSTEM_LOGS = [
@@ -12,154 +13,72 @@ SYSTEM_LOGS = [
     {"timestamp": int(time.time()) - 30, "level": "INFO", "message": "Modbus TCP Gateway Link Established."}
 ]
 
-# 끊김 없이 완벽하게 복원된 하이테크 UI 마크업 및 자바스크립트 가속 통신 엔진
-MAIN_HTML = """
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dcim.kr - SOVEREIGN MASTER CONTROL</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg-main: #040508;
-            --panel-bg: #090b11;
-            --border-muted: #161a23;
-            --border-glow: #222938;
-            --neon-green: #00ff66;
-            --neon-blue: #00e5ff;
-            --neon-orange: #ff9900;
-            --neon-red: #ff2a5f;
-            --text-main: #f1f5f9;
-            --text-muted: #4f5e75;
-        }
+@app.route('/')
+def index():
+    # templates/index.html 파일을 랜더링합니다.
+    return render_template('index.html')
 
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            font-family: 'Inter', 'Malgun Gothic', sans-serif;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
-            background-image: 
-                linear-gradient(rgba(22, 26, 35, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(22, 26, 35, 0.3) 1px, transparent 1px);
-            background-size: 30px 30px;
-        }
+@app.route('/api/v1/telemetry', methods=['GET'])
+def get_telemetry():
+    current_time = time.time()
+    load_factor = (math.sin(current_time / 8) + 1) / 2
+    
+    rack_metrics = []
+    total_it_power = 0.0
+    
+    for row_idx in range(4):
+        row_letter = chr(65 + row_idx)
+        for col_idx in range(1, 13):
+            is_hpc = row_idx in [1, 2]
+            base_temp = 26.5 if is_hpc else 21.0
+            noise = random.uniform(-0.3, 0.3)
+            
+            calculated_temp = base_temp + (load_factor * 54.0 if is_hpc else random.uniform(0, 2.5)) + noise
+            calculated_power = calculated_temp * 0.415
+            total_it_power += calculated_power
+            
+            rack_metrics.append({
+                "id": f"RACK-{row_letter}-{col_idx:02d}",
+                "node_class": "HPC_ACCELERATOR" if is_hpc else "STANDARD_STORAGE",
+                "temperature_c": round(calculated_temp, 2),
+                "power_consumption_kw": round(calculated_power, 3),
+                "status": "CRITICAL" if calculated_temp > 75 else "ONLINE"
+            })
+            
+    if load_factor > 0.85 and len(SYSTEM_LOGS) < 15:
+        SYSTEM_LOGS.append({
+            "timestamp": int(current_time),
+            "level": "WARN",
+            "message": f"High thermal threshold exceeded on HPC Cluster. Load: {round(load_factor*100, 1)}%"
+        })
 
-        .container {
-            max-width: 1720px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+    cooling_power = total_it_power * 0.35 + (load_factor * 25.0)
+    total_facility_power = total_it_power + cooling_power
+    pue = total_facility_power / total_it_power if total_it_power > 0 else 1.0
+    
+    return jsonify({
+        "status": "synchronized",
+        "timestamp": int(current_time),
+        "summary": {
+            "load_factor": round(load_factor, 4),
+            "it_power_kw": round(total_it_power, 2),
+            "total_power_kw": round(total_facility_power, 2),
+            "pue": round(pue, 2)
+        },
+        "assets": rack_metrics,
+        "logs": SYSTEM_LOGS[-5:]
+    })
 
-        /* 📡 엔터프라이즈 탑 바 헤더 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-muted);
-            padding: 14px 24px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-        }
+@app.route('/api/v1/control/purge', methods=['POST'])
+def purge_node():
+    current_time = int(time.time())
+    SYSTEM_LOGS.append({
+        "timestamp": current_time,
+        "level": "CRITICAL",
+        "message": "Manual Purge Signal Injected by Administrator."
+    })
+    return jsonify({"status": "acknowledged", "purged_at": current_time})
 
-        .brand {
-            font-size: 26px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -1px;
-            margin: 0;
-        }
-
-        .brand span {
-            color: var(--neon-red);
-        }
-
-        .status-badge {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--neon-green);
-            background: rgba(0, 255, 102, 0.04);
-            border: 1px solid rgba(0, 255, 102, 0.2);
-            padding: 6px 16px;
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 0.5px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background-color: var(--neon-green);
-            border-radius: 50%;
-            animation: pulse 1.6s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.6); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 255, 102, 0); }
-            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
-        }
-
-        /* 📈 실시간 PUE 계측기 지표 스트립 */
-        .meta-strip {
-            display: flex;
-            gap: 16px;
-        }
-
-        .meta-box {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-muted);
-            padding: 16px 24px;
-            border-radius: 10px;
-            flex: 1;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        .meta-box label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .meta-box span {
-            display: block;
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--neon-blue);
-            margin-top: 6px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* 📊 관제 레이아웃 메인 그리드 */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1.55fr 1fr;
-            gap: 18px;
-        }
-
-        .panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-muted);
-            border-radius: 12px;
-            padding: 22px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel h2 {
-            margin: 0 0 16px 0;
-            font-size: 13px;
-            font-weight:
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
