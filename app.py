@@ -17,7 +17,7 @@ def update_dcim_physics():
     SIM_STATE["workload"] += diff * 0.2
 
 # =========================================================
-# 초격차 엔터프라이즈 UI (실장도, 토폴로지, 3D뷰 완벽 탑재)
+# 초격차 엔터프라이즈 UI (킬스위치 UI 은닉화)
 # =========================================================
 ENTERPRISE_HTML = """
 <!DOCTYPE html>
@@ -43,37 +43,51 @@ ENTERPRISE_HTML = """
         .nav-item { padding: 10px 20px 10px 30px; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: 500; transition: 0.2s; border-left: 3px solid transparent; }
         .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
         .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--blue); border-left-color: var(--blue); font-weight: 600; }
-        .nav-item.critical { color: var(--red); margin-top: auto; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 20px; }
+        
+        /* 🚨 수정된 킬스위치 탭 (은밀하고 작게) */
+        .nav-item.critical { 
+            color: var(--text-muted); 
+            font-size: 11px; 
+            margin-top: auto; 
+            border-top: 1px solid var(--border); 
+            padding: 15px 20px 15px 30px; 
+            opacity: 0.5; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        .nav-item.critical:hover { 
+            color: var(--red); 
+            opacity: 1; 
+            background: transparent; 
+            border-left-color: transparent; 
+        }
 
         /* Main Workspace */
         .main-wrapper { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
         .topbar { height: 55px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--panel); }
         .topbar-title { font-size: 15px; font-weight: 600; }
         
-        /* Views */
         .view-section { display: none; padding: 20px; height: calc(100vh - 55px); overflow-y: auto; box-sizing: border-box; }
         .view-section.active { display: block; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Panels & Grids */
         .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin-bottom: 20px; }
         .panel-title { font-size: 14px; font-weight: 600; margin: 0 0 15px 0; color: #fff; display: flex; justify-content: space-between; align-items: center; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 
-        /* Buttons */
         .btn-group { display: flex; gap: 10px; }
         .btn { padding: 8px 15px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: 0.2s; }
         .btn:hover { border-color: var(--blue); color: var(--blue); }
         .btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--blue); color: var(--blue); }
 
-        /* --- 1. Floor Plan (2D/3D) --- */
+        /* Floor Plan */
         .canvas-container { width: 100%; height: 400px; background: #000; border: 1px solid var(--border); border-radius: 4px; position: relative; overflow: hidden; perspective: 1000px; }
         canvas { display: block; width: 100%; height: 100%; transition: transform 0.5s ease; }
         .canvas-3d canvas { transform: rotateX(45deg) rotateZ(-15deg) scale(0.9); box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
         #tooltip { position: absolute; background: rgba(0,0,0,0.9); border: 1px solid var(--blue); padding: 10px; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 11px; display: none; z-index: 100; pointer-events: none; }
 
-        /* --- 2. Rack Elevation (랙 실장도) --- */
+        /* Rack Elevation */
         .rack-container { display: flex; gap: 30px; justify-content: center; background: #0b0d14; padding: 20px; border: 1px solid var(--border); border-radius: 6px; }
         .rack { width: 220px; background: #1a1d2d; border: 2px solid #334155; border-radius: 4px; padding: 5px; display: flex; flex-direction: column-reverse; gap: 2px; position: relative; }
         .rack-title { text-align: center; color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 13px; }
@@ -85,7 +99,7 @@ ENTERPRISE_HTML = """
         .u-hot { background: #ef4444; border-color: #dc2626; color: #fff; animation: pulse 1s infinite alternate; }
         @keyframes pulse { from { opacity: 0.8; } to { opacity: 1; box-shadow: 0 0 10px rgba(239,68,68,0.8); } }
 
-        /* --- 3. Network Topology (포트/토폴로지) --- */
+        /* Topology */
         .topo-container { width: 100%; height: 400px; background: #0b0d14; border: 1px solid var(--border); border-radius: 6px; position: relative; overflow: hidden; }
         .node { position: absolute; background: var(--panel); border: 2px solid var(--border); border-radius: 6px; padding: 10px; width: 120px; text-align: center; font-size: 11px; font-weight: 600; cursor: pointer; z-index: 2; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .node:hover { border-color: var(--blue); }
@@ -99,7 +113,7 @@ ENTERPRISE_HTML = """
         .link.hot { stroke: var(--red); stroke-width: 3; }
         @keyframes dash { to { stroke-dashoffset: -10; } }
 
-        /* --- 4. Security Modal --- */
+        /* Security Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal-overlay.active { display: flex; }
         .modal { background: #0b0d14; border: 1px solid var(--red); width: 600px; border-radius: 6px; padding: 25px; }
@@ -129,7 +143,10 @@ ENTERPRISE_HTML = """
         <div class="nav-item">장비 반출입 관리</div>
         <div class="nav-item">S/W 라이선스 관리</div>
         
-        <div class="nav-item critical" onclick="executeCryptoErase()">⚠️ Sovereign 킬스위치</div>
+        <div class="nav-item critical" onclick="executeCryptoErase()">
+            <span style="font-size:14px;">🔒</span> 
+            <span>Sovereign Protocol (Admin Only)</span>
+        </div>
     </div>
 
     <div class="main-wrapper">
@@ -186,10 +203,9 @@ ENTERPRISE_HTML = """
         <div id="view-elevation" class="view-section">
             <div class="panel">
                 <div class="panel-title">U-Level Rack Elevation (열화상 융합 실장도)</div>
-                <p style="font-size:12px; color:var(--text-muted); margin-top:-5px; margin-bottom:20px;">기존 단순 이미지 실장도를 넘어, 각 U(유닛)별 장착 상태와 실시간 AI 부하/발열 상태를 연동하여 보여줍니다.</p>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-5px; margin-bottom:20px;">각 U(유닛)별 장착 상태와 실시간 AI 부하/발열 상태를 연동하여 보여줍니다.</p>
                 
-                <div class="rack-container" id="rack-container">
-                    </div>
+                <div class="rack-container" id="rack-container"></div>
                 
                 <div style="display:flex; gap:20px; justify-content:center; margin-top:20px; font-size:11px; font-family:'JetBrains Mono'; color:var(--text-muted);">
                     <span style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; background:var(--blue);"></div> Compute Node</span>
@@ -203,15 +219,13 @@ ENTERPRISE_HTML = """
         <div id="view-topology" class="view-section">
             <div class="panel">
                 <div class="panel-title">Dynamic Network Topology (트래픽/발열 연동 포트 맵)</div>
-                <p style="font-size:12px; color:var(--text-muted); margin-top:-5px; margin-bottom:20px;">단순 선긋기가 아닙니다. AI 학습 시 스위치 간 발생하는 병목(Bottleneck)과 포트 발열을 실시간 토폴로지로 시각화합니다.</p>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-5px; margin-bottom:20px;">AI 학습 시 스위치 간 발생하는 병목과 포트 발열을 실시간 토폴로지로 시각화합니다.</p>
                 
                 <div class="topo-container">
-                    <svg class="topo-svg" id="topo-svg">
-                        </svg>
+                    <svg class="topo-svg" id="topo-svg"></svg>
                     <div class="node core">CORE-RTR-01<br><span style="font-weight:normal; color:var(--text-muted);">100G / OK</span></div>
                     <div class="node spine1">SPINE-SW-01<br><span style="font-weight:normal; color:var(--text-muted);">40G / Active</span></div>
                     <div class="node spine2">SPINE-SW-02<br><span style="font-weight:normal; color:var(--text-muted);">40G / Active</span></div>
-                    
                     <div class="node leaf" style="left: 10%;">LEAF-A01 (Storage)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/1</span></div>
                     <div class="node leaf" style="left: 35%;" id="leaf-ai1">LEAF-B01 (AI NPU)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/2</span></div>
                     <div class="node leaf" style="left: 60%;" id="leaf-ai2">LEAF-C01 (AI NPU)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/3</span></div>
@@ -219,13 +233,9 @@ ENTERPRISE_HTML = """
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // ---------------------------------------------------------
-        // 보안 및 UI 탭 컨트롤
-        // ---------------------------------------------------------
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.onkeydown = function(e) { if(e.keyCode==123 || (e.ctrlKey&&e.shiftKey&&(e.keyCode==73||e.keyCode==67||e.keyCode==74)) || (e.ctrlKey&&e.keyCode==85)) return false; };
 
@@ -240,9 +250,6 @@ ENTERPRISE_HTML = """
             if(tabId === 'floorplan') resizeCanvas();
         }
 
-        // ---------------------------------------------------------
-        // 1. 2D/3D Floor Plan 렌더링
-        // ---------------------------------------------------------
         const canvas = document.getElementById('floorCanvas');
         const ctx = canvas.getContext('2d');
         const wrapper = document.getElementById('canvas-wrapper');
@@ -260,7 +267,6 @@ ENTERPRISE_HTML = """
         let racks = [];
         function drawFloorPlan(load) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Grid background
             ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=30) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=30) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
@@ -287,7 +293,6 @@ ENTERPRISE_HTML = """
                     ctx.shadowColor = color; ctx.shadowBlur = temp > 65 ? 15 : 0;
                     ctx.fillStyle = color; ctx.fillRect(rx, ry, w, h);
                     
-                    // Server lines
                     ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(0,0,0,0.5)';
                     for(let u=5; u<h; u+=8) ctx.fillRect(rx+2, ry+u, w-4, 4);
                     
@@ -297,9 +302,6 @@ ENTERPRISE_HTML = """
             }
         }
 
-        // ---------------------------------------------------------
-        // 2. Rack Elevation (실장도) 동적 생성
-        // ---------------------------------------------------------
         function initRackElevation() {
             const container = document.getElementById('rack-container');
             container.innerHTML = '';
@@ -309,7 +311,6 @@ ENTERPRISE_HTML = """
                 let rackHtml = `<div class="rack"><div class="rack-title">${name}</div>`;
                 for(let u=1; u<=42; u++) {
                     let typeClass = ''; let label = '';
-                    // 패턴 시뮬레이션
                     if(idx === 0 && u > 10 && u < 30) { typeClass = 'u-storage'; label = `SAN-DS-${u}`; }
                     else if(idx > 0 && u > 5 && u < 38) { typeClass = 'u-server'; label = `NPU-NODE-${u}`; }
                     else if(u === 40 || u === 41) { typeClass = 'u-network'; label = `TOR-SW-${u}`; }
@@ -323,7 +324,6 @@ ENTERPRISE_HTML = """
         initRackElevation();
 
         function updateElevation(load) {
-            // 부하가 높을 때 NPU 서버 유닛에 핫스팟(붉은 깜빡임) 효과 부여
             for(let u=6; u<38; u++) {
                 let el1 = document.getElementById(`u-1-${u}`);
                 let el2 = document.getElementById(`u-2-${u}`);
@@ -337,44 +337,29 @@ ENTERPRISE_HTML = """
             }
         }
 
-        // ---------------------------------------------------------
-        // 3. Network Topology (토폴로지) 동적 드로잉
-        // ---------------------------------------------------------
         function drawTopology(load) {
             const svg = document.getElementById('topo-svg');
-            // 좌표를 퍼센트 기반으로 직접 하드코딩하여 반응형 구현
             const links = [
-                {x1:50, y1:15, x2:25, y2:40}, // Core to Spine1
-                {x1:50, y1:15, x2:65, y2:40}, // Core to Spine2
-                {x1:25, y1:40, x2:15, y2:75}, // Spine1 to Leaf1
-                {x1:25, y1:40, x2:40, y2:75}, // Spine1 to Leaf2
-                {x1:65, y1:40, x2:65, y2:75}, // Spine2 to Leaf3
-                {x1:65, y1:40, x2:90, y2:75}  // Spine2 to Leaf4
+                {x1:50, y1:15, x2:25, y2:40}, {x1:50, y1:15, x2:65, y2:40},
+                {x1:25, y1:40, x2:15, y2:75}, {x1:25, y1:40, x2:40, y2:75},
+                {x1:65, y1:40, x2:65, y2:75}, {x1:65, y1:40, x2:90, y2:75}
             ];
             
             let svgHtml = '';
             links.forEach((l, i) => {
-                // AI 노드로 가는 링크(3, 4번)는 부하 시 활성화/핫스팟 표현
                 let linkClass = 'link';
                 if ((i === 3 || i === 4) && load > 0.2) linkClass = 'link active';
                 if ((i === 3 || i === 4) && load > 0.8) linkClass = 'link hot';
-                
                 svgHtml += `<path d="M${l.x1}% ${l.y1}% C${l.x1}% ${l.y1+10}%, ${l.x2}% ${l.y2-10}%, ${l.x2}% ${l.y2}%" class="${linkClass}" />`;
             });
             svg.innerHTML = svgHtml;
             
             let ai1 = document.getElementById('leaf-ai1');
             let ai2 = document.getElementById('leaf-ai2');
-            if(load > 0.8) {
-                ai1.style.borderColor = 'var(--red)'; ai2.style.borderColor = 'var(--red)';
-            } else {
-                ai1.style.borderColor = 'var(--blue)'; ai2.style.borderColor = 'var(--blue)';
-            }
+            if(load > 0.8) { ai1.style.borderColor = 'var(--red)'; ai2.style.borderColor = 'var(--red)'; }
+            else { ai1.style.borderColor = 'var(--blue)'; ai2.style.borderColor = 'var(--blue)'; }
         }
 
-        // ---------------------------------------------------------
-        // 메인 루프 및 컨트롤러
-        // ---------------------------------------------------------
         const trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
             type: 'line',
             data: { labels: Array(20).fill(''), datasets: [
@@ -400,16 +385,13 @@ ENTERPRISE_HTML = """
                 let coolingPower = (load * 1000) + 200;
                 let pue = (itPower + coolingPower) / itPower;
 
-                // Update Dashboard Metrics
                 document.getElementById('val-power').innerText = itPower.toFixed(1) + " kW";
                 document.getElementById('val-pue').innerText = pue.toFixed(2);
-                document.getElementById('val-load').innerText = (load * 100).toFixed(0) + "%";
                 
                 let cStatus = document.getElementById('val-cool');
                 if(load > 0.8) { cStatus.innerText = "PRE-COOLING: 18°C"; cStatus.style.color = "var(--blue)"; }
                 else { cStatus.innerText = "AUTO: 22°C"; cStatus.style.color = "var(--text-muted)"; }
 
-                // Update All Views
                 drawFloorPlan(load);
                 updateElevation(load);
                 drawTopology(load);
@@ -421,14 +403,9 @@ ENTERPRISE_HTML = """
         }
         setInterval(fetchState, 1000);
 
-        // ---------------------------------------------------------
-        // Sovereign 킬스위치
-        // ---------------------------------------------------------
         function executeCryptoErase() {
-            if(!confirm("⚠️ 치명적 경고: 하드웨어 암호화 키 파기 프로토콜을 가동합니까?")) {
-                document.getElementById('zero-modal').classList.remove('active');
-                return;
-            }
+            if(!confirm("⚠️ 보안 확인: 하드웨어 암호화 키 파기 프로토콜을 가동합니까?")) return;
+            document.getElementById('zero-modal').classList.add('active');
             let logs = document.getElementById('wipe-logs');
             logs.innerHTML = "";
             let msgs = [
@@ -445,11 +422,9 @@ ENTERPRISE_HTML = """
                 logs.innerHTML += `<div><span style="color:var(--text-muted)">[${new Date().toISOString().split('T')[1].slice(0,-1)}]</span> <span style="color:#fff">${msgs[i]}</span></div>`; 
                 logs.scrollTop = logs.scrollHeight;
                 i++; 
-                if(i >= msgs.length) {
-                    clearInterval(intv);
-                    setTimeout(() => { location.reload(); }, 4000);
-                }
+                if(i >= msgs.length) { clearInterval(intv); setTimeout(() => { location.reload(); }, 4000); }
             }, 700);
+            fetch('/api/v1/control/purge', { method: 'POST' });
         }
     </script>
 </body>
@@ -471,6 +446,10 @@ def control_workload():
     if 'target_workload' in data:
         SIM_STATE["target_workload"] = float(data['target_workload'])
     return jsonify({"status": "Accepted"})
+
+@app.route('/api/v1/control/purge', methods=['POST'])
+def purge_node():
+    return jsonify({"status": "Zeroized"})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
