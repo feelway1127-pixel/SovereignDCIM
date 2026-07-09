@@ -7,7 +7,7 @@
     <style>
         body { background: #020617; color: #10b981; font-family: 'JetBrains Mono', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; user-select: none; }
         .login-box { border: 1px solid #1e293b; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 400px; background: #0f172a; border-radius: 8px; }
-        h1 { margin-top: 0; font-size: 32px; color: #f8fafc; letter-spacing: -1px; } h1 span { color: #3b82f6; }
+        h1 { margin-top: 0; font-size: 32px; color: #f8fafc; letter-spacing: -1px; font-family: 'Inter'; } h1 span { color: #3b82f6; }
         input { width: 100%; padding: 12px; margin-top: 15px; background: #020617; border: 1px solid #334155; color: #10b981; font-size: 14px; font-family: 'JetBrains Mono'; text-align: center; outline: none; border-radius: 4px; box-sizing: border-box; }
         input:focus { border-color: #3b82f6; }
         button { margin-top: 25px; width: 100%; padding: 14px; background: #3b82f6; border: none; color: #fff; font-weight: bold; font-size: 15px; cursor: pointer; border-radius: 4px; transition: 0.2s; font-family: 'Inter', sans-serif;}
@@ -20,8 +20,8 @@
         <h1>dcim<span>.kr</span></h1>
         <p style="font-size: 12px; color: #64748b; font-family:'Inter', sans-serif; margin-top:-5px; margin-bottom:20px;">Sovereign AI Infrastructure Management</p>
         <form method="POST" action="/login">
-            <input type="text" name="username" placeholder="Username (admin / operator)" required autofocus autocomplete="off">
-            <input type="password" name="password" placeholder="Password" required>
+            <input type="text" name="username" placeholder="Username (admin)" required autofocus autocomplete="off">
+            <input type="password" name="password" placeholder="Password (1147)" required>
             <button type="submit">AUTHORIZE</button>
         </form>
         {% if error %}

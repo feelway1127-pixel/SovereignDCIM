@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>dcim.kr - Ultimate Sovereign AI Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,7 +13,6 @@
         }
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; user-select: none; }
         
-        /* Sidebar */
         .sidebar { width: 260px; background: #07090e; border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; }
         .logo { padding: 20px; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;}
         .logo span { color: var(--blue); }
@@ -32,8 +30,7 @@
         .btn-zero { color: var(--text-muted); padding: 10px; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 5px; opacity: 0.7; transition: 0.2s;}
         .btn-zero:hover { color: var(--red); opacity: 1; background: rgba(239, 68, 68, 0.1); border-radius: 4px;}
 
-        /* Main Workspace & Tabs */
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); position: relative;}
         .topbar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--panel); }
         .nav-tabs { display: flex; gap: 2px; height: 100%; }
         .tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13px; font-weight: 600; padding: 0 20px; cursor: pointer; border-bottom: 2px solid transparent; font-family: 'Inter'; transition: 0.2s;}
@@ -48,12 +45,12 @@
         .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 15px; position: relative;}
         .panel-title { font-size: 13px; font-weight: 600; margin: 0 0 15px 0; color: #fff; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 🚨 ESG & Cost KPIs (C-Level 타겟) */
         .esg-kpi-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .kpi-box { background: #0b0d14; border: 1px solid var(--border); padding: 12px; border-radius: 6px; position: relative; }
         .kpi-val { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: 700; margin: 5px 0; display:flex; align-items:baseline; gap:5px;}
         .kpi-unit { font-size: 11px; color: var(--text-muted); font-weight: normal; font-family: 'Inter';}
         .ai-badge { position: absolute; top: 10px; right: 10px; font-size: 9px; padding: 2px 4px; border-radius: 3px; background: rgba(59, 130, 246, 0.15); color: var(--blue); border: 1px solid var(--blue); font-family: 'JetBrains Mono';}
+        .ai-badge.anomaly { background: rgba(239, 68, 68, 0.15); color: var(--red); border-color: var(--red); }
         
         .workload-controls { display: flex; gap: 5px;}
         .w-btn { flex: 1; padding: 10px; background: #0b0d14; border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; transition: 0.2s; }
@@ -61,18 +58,17 @@
         .w-btn.active { background: rgba(59, 130, 246, 0.1); border-color: var(--blue); color: var(--blue); }
         .w-btn.danger.active { background: rgba(239, 68, 68, 0.1); border-color: var(--red); color: var(--red); }
 
-        /* Canvas */
         .canvas-container { width: 100%; height: 350px; background: #000; border: 1px solid var(--border); border-radius: 4px; position: relative; cursor: crosshair;}
         canvas { width: 100%; height: 100%; display: block; }
         
-        /* 🚨 Active Alarms (장애 관리) */
-        .alarm-list { height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+        .alarm-list { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
         .alarm-item { background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--red); padding: 8px 12px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; border-radius: 0 4px 4px 0;}
-        .alarm-item.warn { background: rgba(245, 158, 11, 0.1); border-left-color: var(--orange); }
         .btn-ack { background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 9px; padding: 4px 8px; border-radius: 3px; cursor: pointer; transition: 0.2s;}
         .btn-ack:hover { background: var(--green); }
 
-        /* 🚨 Drill-down Panel (정밀 센서 뎁스 강화) */
+        .audit-log { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-muted); overflow-y: auto; height: 120px; background: #000; padding: 10px; border: 1px solid var(--border); border-radius: 4px;}
+
+        /* Drill-down Panel */
         .drilldown-panel { position: absolute; top: 0; right: -400px; width: 350px; height: 100%; background: #0b0d14; border-left: 1px solid var(--border); box-shadow: -10px 0 30px rgba(0,0,0,0.5); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; display: flex; flex-direction: column; }
         .drilldown-panel.open { right: 0; }
         .drill-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--panel); }
@@ -91,7 +87,7 @@
         .rack-lg { width: 160px; background: #1a1d2d; border: 2px solid #334155; border-radius: 4px; padding: 4px; display: flex; flex-direction: column-reverse; gap: 1px; }
         .u-slot-lg { height: 12px; background: #0f111a; border: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; padding: 0 4px; font-family: 'JetBrains Mono'; font-size: 8px; color: #475569;}
 
-        /* Topology */
+        /* Topology Tab */
         .topo-container { width: 100%; height: 400px; background: #0b0d14; border: 1px solid var(--border); border-radius: 4px; position: relative; }
         .node { position: absolute; background: var(--panel); border: 2px solid var(--border); border-radius: 6px; padding: 8px; width: 100px; text-align: center; font-size: 10px; font-weight: 600; z-index: 2;}
         .node.core { top: 20px; left: calc(50% - 50px); border-color: var(--orange); }
@@ -101,7 +97,6 @@
         .link { stroke: #334155; stroke-width: 2; fill: none; }
         .link.active { stroke: var(--blue); stroke-width: 3; stroke-dasharray: 4; animation: dash 1s linear infinite; }
         .link.hot { stroke: var(--red); stroke-width: 3; }
-        @keyframes dash { to { stroke-dashoffset: -10; } }
 
         /* Modal */
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:999; align-items:center; justify-content:center; }
@@ -115,7 +110,7 @@
     <div class="modal" id="reauth-modal">
         <div class="modal-content">
             <h3 style="color: var(--red); margin-top:0; font-size: 16px;">⚠️ Sovereign Hardware Zeroization</h3>
-            <p style="font-size:12px; color:var(--text-muted); line-height: 1.5;">NIST SP 800-88 규격에 따라 암호화 키를 파기합니다. <strong>관리자 비밀번호</strong>를 입력하십시오.</p>
+            <p style="font-size:12px; color:var(--text-muted); line-height: 1.5;">NIST SP 800-88 규격에 따라 암호화 키를 파기합니다. <strong>관리자 비밀번호 (1147)</strong>를 입력하십시오.</p>
             <input type="password" id="reauth-pw" class="input-pw" placeholder="Enter Admin Password">
             <p id="reauth-error" style="color:var(--red); font-size:12px; display:none;">인증 실패.</p>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
@@ -141,11 +136,6 @@
                 <details>
                     <summary>📁 3F Server Room</summary>
                     <div class="tree-leaf">↳ ROW-A (Legacy)</div>
-                </details>
-                <details>
-                    <summary>⚙️ Facility Systems</summary>
-                    <div class="tree-leaf">↳ UPS Room</div>
-                    <div class="tree-leaf">↳ Chiller Plant</div>
                 </details>
             </details>
         </div>
@@ -177,12 +167,11 @@
         </div>
         
         <div class="content-area">
-            
             <div class="esg-kpi-bar">
                 <div class="kpi-box">
                     <div style="font-size:11px; color:var(--text-muted);">Total Power Draw</div>
                     <div class="kpi-val" id="val-power">0.0 <span class="kpi-unit">kW</span></div>
-                    <div class="ai-badge" id="ai-power-badge">AI Predict: --</div>
+                    <div class="ai-badge" id="ai-power-badge">Predict: --</div>
                 </div>
                 <div class="kpi-box">
                     <div style="font-size:11px; color:var(--text-muted);">Real-time PUE</div>
@@ -215,22 +204,19 @@
                     
                     <div style="display:flex; flex-direction:column; gap:15px;">
                         <div class="panel" style="flex:1;">
-                            <div class="panel-title" style="color:var(--red);">Active Alarms (이벤트 콘솔)</div>
-                            <div class="alarm-list" id="alarm-container">
-                                <div style="font-size:11px; color:var(--text-muted); text-align:center; padding-top:20px;">현재 활성화된 경보가 없습니다.</div>
-                            </div>
+                            <div class="panel-title" style="color:var(--red); font-size:12px;">Active Alarms</div>
+                            <div class="alarm-list" id="alarm-container"></div>
                         </div>
-                        
                         <div class="panel" style="flex:1;">
-                            <div class="panel-title">Power Spike Trend</div>
-                            <div style="position:relative; height: 120px;"><canvas id="trendChart"></canvas></div>
+                            <div class="panel-title" style="font-size:12px;">Audit Trail</div>
+                            <div class="audit-log" id="audit-container"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="view-elevation" class="view-section">
-                <div class="panel" style="flex: 1; display:flex; flex-direction:column;">
+                <div class="panel" style="flex: 1;">
                     <div class="panel-title">U-Level Rack Elevation (ROW-B AI Cluster)</div>
                     <div class="elevation-container" id="rack-container"></div>
                 </div>
@@ -241,17 +227,16 @@
                     <div class="panel-title">Dynamic AI Network Topology</div>
                     <div class="topo-container">
                         <svg class="topo-svg" id="topo-svg"></svg>
-                        <div class="node core">CORE-RTR-01<br><span style="font-weight:normal; color:var(--text-muted);">400G / OK</span></div>
-                        <div class="node spine" style="left: 20%;">SPINE-SW-01<br><span style="font-weight:normal; color:var(--text-muted);">100G / Active</span></div>
-                        <div class="node spine" style="left: 65%;">SPINE-SW-02<br><span style="font-weight:normal; color:var(--text-muted);">100G / Active</span></div>
-                        <div class="node leaf" style="left: 5%;">LEAF-A01 (STG)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/1</span></div>
-                        <div class="node leaf" style="left: 30%;" id="leaf-ai1">LEAF-B01 (NPU)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/2</span></div>
-                        <div class="node leaf" style="left: 55%;" id="leaf-ai2">LEAF-B02 (NPU)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/3</span></div>
-                        <div class="node leaf" style="left: 80%;">LEAF-C01 (MGMT)<br><span style="font-weight:normal; color:var(--text-muted);">Eth1/4</span></div>
+                        <div class="node core">CORE-RTR-01<br><span style="font-weight:normal; color:var(--text-muted);">400G</span></div>
+                        <div class="node spine" style="left: 20%;">SPINE-01<br><span style="font-weight:normal; color:var(--text-muted);">100G</span></div>
+                        <div class="node spine" style="left: 65%;">SPINE-02<br><span style="font-weight:normal; color:var(--text-muted);">100G</span></div>
+                        <div class="node leaf" style="left: 5%;">LEAF-A01</div>
+                        <div class="node leaf" style="left: 30%;" id="leaf-ai1">LEAF-B01</div>
+                        <div class="node leaf" style="left: 55%;" id="leaf-ai2">LEAF-B02</div>
+                        <div class="node leaf" style="left: 80%;">LEAF-C01</div>
                     </div>
                 </div>
             </div>
-
         </div>
 
         <div id="drilldown-panel" class="drilldown-panel">
@@ -261,30 +246,23 @@
             </div>
             <div class="drill-content">
                 <div class="rack-mini" id="mini-rack"></div>
-                
                 <div style="margin-top:10px;">
-                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase;">Environmental Sensors</div>
-                    <div class="detail-row"><span>Return Temp (후면)</span><span class="detail-val" id="drill-temp">24.5 °C</span></div>
-                    <div class="detail-row"><span>AI +45m Predict</span><span class="detail-val" id="drill-predict" style="color:var(--red);">--</span></div>
-                    <div class="detail-row"><span>Relative Humidity</span><span class="detail-val">42.5 %</span></div>
-                    <div class="detail-row"><span>Airflow (CFM)</span><span class="detail-val" id="drill-airflow">1250 CFM</span></div>
-                    <div class="detail-row"><span>Leak Detection</span><span class="detail-val" style="color:var(--green);">DRY (Normal)</span></div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:5px;">ENVIRONMENTAL SENSORS</div>
+                    <div class="detail-row"><span>Temp</span><span class="detail-val" id="drill-temp">24.5 °C</span></div>
+                    <div class="detail-row"><span>AI Predict</span><span class="detail-val" id="drill-predict" style="color:var(--red);">--</span></div>
+                    <div class="detail-row"><span>Airflow</span><span class="detail-val" id="drill-airflow">1250 CFM</span></div>
                     
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:15px; margin-bottom:5px; text-transform:uppercase;">Power & Network</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:15px; margin-bottom:5px;">POWER & NETWORK</div>
                     <div class="detail-row"><span>Power Draw</span><span class="detail-val" id="drill-power">12.4 kW</span></div>
                     <div class="detail-row"><span>Network Link</span><span class="detail-val" style="color:var(--green);">400Gbps</span></div>
                 </div>
-                <button class="w-btn" style="margin-top:10px;" onclick="alert('SSH 통신 모듈 초기화 중...')">Connect to BMC Console</button>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            document.onkeydown = e => { if(e.keyCode==123 || (e.ctrlKey&&e.shiftKey&&(e.keyCode==73||e.keyCode==67||e.keyCode==74)) || (e.ctrlKey&&e.keyCode==85)) return false; };
-
-            // 탭 제어
+            // Tabs
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -296,7 +274,7 @@
                 });
             });
 
-            // 워크로드 제어
+            // Workload
             document.querySelectorAll('.workload-controls .w-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.workload-controls .w-btn').forEach(b => b.classList.remove('active', 'danger'));
@@ -310,7 +288,7 @@
                 });
             });
 
-            // 드릴다운 패널
+            // Drilldown
             const drillPanel = document.getElementById('drilldown-panel');
             document.getElementById('btn-close-drill').addEventListener('click', () => drillPanel.classList.remove('open'));
 
@@ -324,36 +302,29 @@
                 let html = '';
                 for(let u=1; u<=42; u++) {
                     let cls = '';
-                    if(isAI && u>5 && u<38) {
-                        cls = 'active';
-                        if(temp > 50 && Math.random() > 0.5) cls = 'hot';
-                    } else if (!isAI && u>10 && u<30) cls = 'active';
+                    if(isAI && u>5 && u<38) { cls = 'active'; if(temp > 50 && Math.random() > 0.5) cls = 'hot'; } 
+                    else if (!isAI && u>10 && u<30) { cls = 'active'; }
                     html += `<div class="u-slot ${cls}"></div>`;
                 }
                 document.getElementById('mini-rack').innerHTML = html;
                 drillPanel.classList.add('open');
             }
 
-            // 캔버스 및 렌더링 로직
+            // Canvas 2D
             const canvas = document.getElementById('floorCanvas');
             const ctx = canvas.getContext('2d');
             let racksData = [];
 
-            function resizeCanvas() {
-                if(canvas.parentElement) { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
-            }
+            function resizeCanvas() { if(canvas.parentElement) { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; } }
             window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
             function drawFloorPlan(load) {
                 if(canvas.width === 0) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 racksData = [];
-
                 const rows = 3; const cols = 14;
-                const w = Math.min(25, (canvas.width - 150) / cols); 
-                const h = 45; const spX = 8; const spY = 40;
-                const startX = (canvas.width - (cols * (w + spX))) / 2;
-                const startY = 30;
+                const w = Math.min(25, (canvas.width - 150) / cols); const h = 45; const spX = 8; const spY = 40;
+                const startX = (canvas.width - (cols * (w + spX))) / 2; const startY = 30;
 
                 for(let r=0; r<rows; r++) {
                     ctx.fillStyle = '#475569'; ctx.font = '600 10px Inter';
@@ -364,12 +335,10 @@
                         let isAI = (r===1 || r===2);
                         let temp = isAI ? 22 + (load * 60) + (Math.random()*4-2) : 21 + Math.random()*2;
                         let rx = startX + c * (w + spX); let ry = startY + r * (h + spY);
-                        
                         let color = temp < 28 ? '#3b82f6' : temp < 50 ? '#10b981' : temp < 70 ? '#f59e0b' : '#ef4444';
                         
                         ctx.fillStyle = color; ctx.fillRect(rx, ry, w, h);
                         ctx.strokeStyle = '#0b0d14'; ctx.lineWidth = 2; ctx.strokeRect(rx, ry, w, h);
-
                         racksData.push({ id: `RACK-${String.fromCharCode(65+r)}-${(c+1).toString().padStart(2,'0')}`, x: rx, y: ry, w: w, h: h, temp: temp, isAI: isAI });
                     }
                 }
@@ -385,37 +354,30 @@
                 }
             });
 
+            // Elevation
             function updateElevation(load) {
                 const container = document.getElementById('rack-container');
                 if(container.innerHTML === '') {
-                    const racks = ['R2-B01 (Master)', 'R2-B02 (Worker)', 'R2-B03 (Worker)', 'R2-B04 (Worker)'];
+                    const racks = ['R2-B01', 'R2-B02', 'R2-B03', 'R2-B04'];
                     racks.forEach((name, idx) => {
                         let html = `<div class="rack-lg"><div style="text-align:center; color:#fff; font-size:11px; margin-bottom:5px;">${name}</div>`;
                         for(let u=1; u<=42; u++) {
                             let cls = ''; let lbl = '';
-                            if(u >= 40) { cls = 'background:#064e3b;'; lbl = 'ToR'; }
-                            else if(u >= 5 && u <= 38) { cls = 'background:#1e3a8a;'; lbl = 'HGX'; }
+                            if(u >= 40) { cls = 'background:#064e3b;'; lbl = 'ToR'; } else if(u >= 5 && u <= 38) { cls = 'background:#1e3a8a;'; lbl = 'HGX'; }
                             html += `<div class="u-slot-lg" style="${cls}" id="u-lg-${idx}-${u}"><span>${u}U</span> <span>${lbl}</span></div>`;
                         }
-                        html += `</div>`;
-                        container.innerHTML += html;
+                        html += `</div>`; container.innerHTML += html;
                     });
                 }
-
                 for(let idx=0; idx<4; idx++) {
                     for(let u=5; u<=38; u++) {
                         let el = document.getElementById(`u-lg-${idx}-${u}`);
-                        if(el) {
-                            if(load > 0.8 && Math.random() > 0.7) {
-                                el.style.background = '#7f1d1d'; el.style.color = '#fecaca';
-                            } else {
-                                el.style.background = '#1e3a8a'; el.style.color = '#475569';
-                            }
-                        }
+                        if(el) { el.style.background = (load > 0.8 && Math.random() > 0.7) ? '#7f1d1d' : '#1e3a8a'; }
                     }
                 }
             }
 
+            // Topology
             function drawTopology(load) {
                 const svg = document.getElementById('topo-svg');
                 if(!svg) return;
@@ -434,35 +396,7 @@
                 svg.innerHTML = html;
             }
 
-            Chart.defaults.color = '#64748b'; Chart.defaults.font.family = 'Inter';
-            const trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
-                type: 'line',
-                data: { labels: Array(30).fill(''), datasets: [
-                    { label: 'IT', data: Array(30).fill(0), borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, tension: 0.2 },
-                    { label: 'Cooling', data: Array(30).fill(0), borderColor: '#10b981', borderWidth: 2, pointRadius: 0, tension: 0.2 }
-                ]},
-                options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { display: false }, y: { grid: { color: '#1e293b' } } }, plugins: { legend: { display: false } } }
-            });
-
-            // 🚨 Alarms Logic
-            function updateAlarms(load) {
-                const container = document.getElementById('alarm-container');
-                if(load > 0.8) {
-                    container.innerHTML = `
-                        <div class="alarm-item" id="alm-1">
-                            <div><strong style="color:var(--red);">CRITICAL</strong> | ROW-B NPU Thermal Runaway Predicted<br><span style="color:var(--text-muted);">Est. 85°C in 12 mins. AI Pre-cooling engaged.</span></div>
-                            <button class="btn-ack" onclick="document.getElementById('alm-1').remove()">ACK</button>
-                        </div>
-                        <div class="alarm-item warn" id="alm-2">
-                            <div><strong style="color:var(--orange);">WARNING</strong> | Switch LEAF-B01 High Traffic<br><span style="color:var(--text-muted);">Port Eth1/2 saturated.</span></div>
-                            <button class="btn-ack" onclick="document.getElementById('alm-2').remove()">ACK</button>
-                        </div>
-                    `;
-                } else {
-                    container.innerHTML = `<div style="font-size:11px; color:var(--text-muted); text-align:center; padding-top:20px;">현재 활성화된 경보가 없습니다.</div>`;
-                }
-            }
-
+            // Fetch Data
             async function fetchState() {
                 try {
                     const res = await fetch('/api/v1/state');
@@ -472,39 +406,44 @@
                     
                     document.getElementById('val-power').innerHTML = `${data.it_power_kw} <span class="kpi-unit">kW</span>`;
                     document.getElementById('val-pue').innerText = data.pue;
-                    
-                    // 🚨 ESG Metrics Calc
-                    const carbon = (data.it_power_kw * 0.42).toFixed(1); // 0.42 kgCO2e per kWh
-                    const cost = Math.floor(data.it_power_kw * 120.5).toLocaleString(); // 120.5 KRW per kWh
-                    document.getElementById('val-carbon').innerHTML = `${carbon} <span class="kpi-unit">kgCO2e/h</span>`;
-                    document.getElementById('val-cost').innerHTML = `₩ ${cost} <span class="kpi-unit">/h</span>`;
+                    document.getElementById('val-carbon').innerHTML = `${(data.it_power_kw * 0.42).toFixed(1)} <span class="kpi-unit">kgCO2e</span>`;
+                    document.getElementById('val-cost').innerHTML = `₩ ${Math.floor(data.it_power_kw * 120.5).toLocaleString()} <span class="kpi-unit">/h</span>`;
 
                     const ai = data.ai_insights;
                     if(ai) {
                         const pb = document.getElementById('ai-power-badge');
                         pb.innerText = `+30s Predict: ${ai.it_power_forecast_30s || '--'} kW`;
-                        if(ai.it_power_anomaly && ai.it_power_anomaly.is_anomaly) pb.classList.add('anomaly');
-                        else pb.classList.remove('anomaly');
+                        if(ai.it_power_anomaly && ai.it_power_anomaly.is_anomaly) pb.classList.add('anomaly'); else pb.classList.remove('anomaly');
                     }
-
-                    trendChart.data.datasets[0].data.push(data.it_power_kw); trendChart.data.datasets[0].data.shift();
-                    trendChart.data.datasets[1].data.push(data.cooling_power_kw); trendChart.data.datasets[1].data.shift();
-                    trendChart.update();
                     
-                    drawFloorPlan(data.workload);
-                    updateElevation(data.workload);
-                    drawTopology(data.workload);
+                    drawFloorPlan(data.workload); updateElevation(data.workload); drawTopology(data.workload);
                     
-                    // Update alarms only when state shifts significantly to avoid resetting ACKs
-                    if(!window.lastLoad || Math.abs(window.lastLoad - data.workload) > 0.3) {
-                        updateAlarms(data.workload);
-                        window.lastLoad = data.workload;
-                    }
-
+                    const alarmContainer = document.getElementById('alarm-container');
+                    if(data.workload > 0.8 && alarmContainer.children.length === 0) {
+                        alarmContainer.innerHTML = `
+                            <div class="alarm-item" id="alm-1"><div><strong style="color:var(--red);">CRITICAL</strong> | AI Thermal Runaway Predicted</div><button class="btn-ack" onclick="document.getElementById('alm-1').remove()">ACK</button></div>
+                        `;
+                    } else if (data.workload < 0.8) { alarmContainer.innerHTML = ''; }
                 } catch (err) {}
             }
 
+            async function fetchAudit() {
+                try {
+                    const res = await fetch('/api/v1/audit');
+                    if(!res.ok) return;
+                    const data = await res.json();
+                    document.getElementById('audit-container').innerHTML = data.entries.map(e => `
+                        <div style="border-bottom:1px solid #1e293b; padding:4px 0;">
+                            <span style="color:#3b82f6">[${e.timestamp.split('T')[1].slice(0,-1)}]</span> 
+                            <span style="color:#10b981;">${e.user}</span>: <span style="color:#e2e8f0">${e.action}</span> 
+                        </div>
+                    `).join('');
+                } catch(err) {}
+            }
+
             setInterval(fetchState, 1000);
+            setInterval(fetchAudit, 2000);
+            fetchState(); fetchAudit();
 
             // Zeroization
             document.getElementById('btn-open-zero')?.addEventListener('click', () => document.getElementById('reauth-modal').classList.add('active'));
