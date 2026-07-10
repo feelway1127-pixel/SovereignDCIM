@@ -1,6 +1,6 @@
 # Sovereign AI DCIM (dcim.kr)
 
-국가 주권 AI 데이터센터를 위한 사이버-물리 보안(Cyber-Physical Security) 아키텍처 PoC 및 통합 관제 대시보드입니다. (IEEE TDSC 투고 논문 구현체)
+국가 주권 AI 데이터센터를 위한 사이버-물리 보안(Cyber-Physical Security) 아키텍처 PoC 및 통합 관제 대시보드입니다.
 
 Live Demo: https://dcim.kr
 
